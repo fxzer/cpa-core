@@ -18,6 +18,7 @@ import (
 	sdkAuth "github.com/router-for-me/CLIProxyAPI/v7/sdk/auth"
 	coreauth "github.com/router-for-me/CLIProxyAPI/v7/sdk/cliproxy/auth"
 	"golang.org/x/crypto/bcrypt"
+	"gopkg.in/yaml.v3"
 )
 
 type attemptInfo struct {
@@ -46,6 +47,7 @@ type Handler struct {
 	envSecret           string
 	logDir              string
 	postAuthHook        coreauth.PostAuthHook
+	configUpdateHook    func(*config.Config)
 }
 
 // NewHandler creates a new management handler instance.
@@ -108,6 +110,16 @@ func (h *Handler) SetConfig(cfg *config.Config) {
 	}
 	h.mu.Lock()
 	h.cfg = cfg
+	h.mu.Unlock()
+}
+
+// SetConfigUpdateHook registers a callback fired after management config writes.
+func (h *Handler) SetConfigUpdateHook(hook func(*config.Config)) {
+	if h == nil {
+		return
+	}
+	h.mu.Lock()
+	h.configUpdateHook = hook
 	h.mu.Unlock()
 }
 
@@ -293,8 +305,33 @@ func (h *Handler) persistLocked(c *gin.Context) bool {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to save config: %v", err)})
 		return false
 	}
+	h.notifyConfigUpdatedLocked()
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	return true
+}
+
+func (h *Handler) notifyConfigUpdatedLocked() {
+	if h == nil || h.configUpdateHook == nil {
+		return
+	}
+	hook := h.configUpdateHook
+	snapshot := cloneConfigForUpdateHook(h.cfg)
+	go hook(snapshot)
+}
+
+func cloneConfigForUpdateHook(cfg *config.Config) *config.Config {
+	if cfg == nil {
+		return nil
+	}
+	data, err := yaml.Marshal(cfg)
+	if err != nil {
+		return cfg
+	}
+	var cloned config.Config
+	if err = yaml.Unmarshal(data, &cloned); err != nil {
+		return cfg
+	}
+	return &cloned
 }
 
 // Helper methods for simple types

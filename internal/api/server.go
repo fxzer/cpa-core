@@ -59,6 +59,7 @@ type serverOptionConfig struct {
 	keepAliveTimeout     time.Duration
 	keepAliveOnTimeout   func()
 	postAuthHook         auth.PostAuthHook
+	configUpdateHook     func(*config.Config)
 }
 
 // ServerOption customises HTTP server construction.
@@ -137,6 +138,13 @@ func WithRequestLoggerFactory(factory func(*config.Config, string) logging.Reque
 func WithPostAuthHook(hook auth.PostAuthHook) ServerOption {
 	return func(cfg *serverOptionConfig) {
 		cfg.postAuthHook = hook
+	}
+}
+
+// WithConfigUpdateHook registers a callback for management config writes.
+func WithConfigUpdateHook(hook func(*config.Config)) ServerOption {
+	return func(cfg *serverOptionConfig) {
+		cfg.configUpdateHook = hook
 	}
 }
 
@@ -301,6 +309,9 @@ func NewServer(cfg *config.Config, authManager *auth.Manager, accessManager *sdk
 	configureUsageArchive(cfg)
 	if optionState.postAuthHook != nil {
 		s.mgmt.SetPostAuthHook(optionState.postAuthHook)
+	}
+	if optionState.configUpdateHook != nil {
+		s.mgmt.SetConfigUpdateHook(optionState.configUpdateHook)
 	}
 	s.localPassword = optionState.localPassword
 

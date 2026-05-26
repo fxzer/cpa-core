@@ -12,6 +12,7 @@ import (
 	"github.com/router-for-me/CLIProxyAPI/v7/internal/config"
 	"github.com/router-for-me/CLIProxyAPI/v7/internal/watcher/synthesizer"
 	coreauth "github.com/router-for-me/CLIProxyAPI/v7/sdk/cliproxy/auth"
+	"gopkg.in/yaml.v3"
 )
 
 var snapshotCoreAuthsFunc = snapshotCoreAuths
@@ -94,6 +95,32 @@ func (w *Watcher) refreshAuthState(force bool) {
 	updates := w.prepareAuthUpdatesLocked(auths, force)
 	w.clientsMutex.Unlock()
 	w.dispatchAuthUpdates(updates)
+}
+
+// ApplyConfigSnapshot replaces the watcher config cache and returns auth updates
+// needed to make runtime auth state match that config immediately.
+func (w *Watcher) ApplyConfigSnapshot(cfg *config.Config, force bool) []AuthUpdate {
+	if w == nil || cfg == nil {
+		return nil
+	}
+	w.clientsMutex.Lock()
+	w.config = cfg
+	w.oldConfigYaml, _ = yaml.Marshal(cfg)
+	authDir := w.authDir
+	w.clientsMutex.Unlock()
+
+	auths := snapshotCoreAuthsFunc(cfg, authDir)
+	w.clientsMutex.Lock()
+	if len(w.runtimeAuths) > 0 {
+		for _, a := range w.runtimeAuths {
+			if a != nil {
+				auths = append(auths, a.Clone())
+			}
+		}
+	}
+	updates := w.prepareAuthUpdatesLocked(auths, force)
+	w.clientsMutex.Unlock()
+	return updates
 }
 
 func (w *Watcher) prepareAuthUpdatesLocked(auths []*coreauth.Auth, force bool) []AuthUpdate {

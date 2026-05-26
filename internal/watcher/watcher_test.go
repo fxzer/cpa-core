@@ -144,7 +144,7 @@ func TestSnapshotCoreAuths_ConfigAndAuthFiles(t *testing.T) {
 		AuthDir: authDir,
 		GeminiKey: []config.GeminiKey{
 			{
-				APIKeyEntries: []config.ProviderAPIKeyEntry{{APIKey: "g-key"}}, BaseURL:        "https://gemini",
+				APIKeyEntries: []config.ProviderAPIKeyEntry{{APIKey: "g-key"}}, BaseURL: "https://gemini",
 				ExcludedModels: []string{"Model-A", "model-b"},
 				Headers:        map[string]string{"X-Req": "1"},
 			},
@@ -1609,6 +1609,45 @@ func TestPrepareAuthUpdatesLockedForceAndDelete(t *testing.T) {
 	updates = w.prepareAuthUpdatesLocked([]*coreauth.Auth{}, false)
 	if len(updates) != 1 || updates[0].Action != AuthUpdateActionDelete || updates[0].ID != "a" {
 		t.Fatalf("expected delete for missing auth, got %+v", updates)
+	}
+}
+
+func TestApplyConfigSnapshotDeletesDisabledOpenAICompatAuth(t *testing.T) {
+	cfg := &config.Config{
+		OpenAICompatibility: []config.OpenAICompatibility{{
+			Name:    "disabled-openai",
+			BaseURL: "https://openai.example.com",
+			APIKeyEntries: []config.OpenAICompatibilityAPIKey{{
+				APIKey: "test-key",
+			}},
+			Models: []config.OpenAICompatibilityModel{{
+				Name:  "upstream-model",
+				Alias: "alias-model",
+			}},
+		}},
+	}
+	auths := snapshotCoreAuths(cfg, "")
+	if len(auths) != 1 {
+		t.Fatalf("expected one synthesized auth, got %d", len(auths))
+	}
+
+	w := &Watcher{
+		currentAuths: map[string]*coreauth.Auth{
+			auths[0].ID: auths[0].Clone(),
+		},
+		authQueue: make(chan AuthUpdate, 4),
+	}
+
+	disabledCfg := *cfg
+	disabledCfg.OpenAICompatibility = append([]config.OpenAICompatibility(nil), cfg.OpenAICompatibility...)
+	disabledCfg.OpenAICompatibility[0].Disabled = true
+
+	updates := w.ApplyConfigSnapshot(&disabledCfg, false)
+	if len(updates) != 1 {
+		t.Fatalf("expected one auth update, got %+v", updates)
+	}
+	if updates[0].Action != AuthUpdateActionDelete || updates[0].ID != auths[0].ID {
+		t.Fatalf("expected delete for disabled provider auth %s, got %+v", auths[0].ID, updates[0])
 	}
 }
 

@@ -475,6 +475,10 @@ func (s *Service) rebindExecutors() {
 }
 
 func (s *Service) applyConfigUpdate(newCfg *config.Config) {
+	s.applyConfigUpdateWithServer(newCfg, true)
+}
+
+func (s *Service) applyConfigUpdateWithServer(newCfg *config.Config, updateServer bool) {
 	if s == nil {
 		return
 	}
@@ -548,7 +552,7 @@ func (s *Service) applyConfigUpdate(newCfg *config.Config) {
 
 	s.applyRetryConfig(newCfg)
 	s.applyPprofConfig(newCfg)
-	if s.server != nil {
+	if updateServer && s.server != nil {
 		s.server.UpdateClients(newCfg)
 	}
 	s.cfgMu.Lock()
@@ -562,6 +566,20 @@ func (s *Service) applyConfigUpdate(newCfg *config.Config) {
 		s.registerHomeExecutors()
 	}
 	s.rebindExecutors()
+}
+
+func (s *Service) applyManagementConfigUpdate(newCfg *config.Config) {
+	if s == nil || newCfg == nil {
+		return
+	}
+	s.applyConfigUpdateWithServer(newCfg, false)
+	if s.watcher == nil {
+		return
+	}
+	ctx := coreauth.WithSkipPersist(context.Background())
+	for _, update := range s.watcher.ApplyConfigSnapshot(newCfg, true) {
+		s.handleAuthUpdate(ctx, update)
+	}
 }
 
 func forceHomeRuntimeConfig(cfg *config.Config) {
@@ -808,7 +826,9 @@ func (s *Service) Run(ctx context.Context) error {
 	// legacy clients removed; no caches to refresh
 
 	// handlers no longer depend on legacy clients; pass nil slice initially
-	s.server = api.NewServer(s.cfg, s.coreManager, s.accessManager, s.configPath, s.serverOptions...)
+	serverOptions := append([]api.ServerOption(nil), s.serverOptions...)
+	serverOptions = append(serverOptions, api.WithConfigUpdateHook(s.applyManagementConfigUpdate))
+	s.server = api.NewServer(s.cfg, s.coreManager, s.accessManager, s.configPath, serverOptions...)
 
 	if s.authManager == nil {
 		s.authManager = newDefaultAuthManager()

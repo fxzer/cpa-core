@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/router-for-me/CLIProxyAPI/v7/internal/registry"
+	"github.com/router-for-me/CLIProxyAPI/v7/internal/watcher"
 	coreauth "github.com/router-for-me/CLIProxyAPI/v7/sdk/cliproxy/auth"
 	"github.com/router-for-me/CLIProxyAPI/v7/sdk/config"
 )
@@ -109,6 +110,41 @@ func TestForceHomeRuntimeConfigEnablesUsageStatistics(t *testing.T) {
 
 	if !cfg.UsageStatisticsEnabled {
 		t.Fatal("expected home runtime config to force usage statistics enabled")
+	}
+}
+
+func TestServiceApplyManagementConfigUpdateAppliesAuthDeletes(t *testing.T) {
+	authID := "management-config-auth"
+	manager := coreauth.NewManager(nil, nil, nil)
+	if _, err := manager.Register(context.Background(), &coreauth.Auth{
+		ID:       authID,
+		Provider: "disabled-openai",
+		Status:   coreauth.StatusActive,
+	}); err != nil {
+		t.Fatalf("register auth: %v", err)
+	}
+
+	service := &Service{
+		cfg:         &config.Config{},
+		coreManager: manager,
+		watcher: &WatcherWrapper{
+			applyConfigSnapshot: func(*config.Config, bool) []watcher.AuthUpdate {
+				return []watcher.AuthUpdate{{
+					Action: watcher.AuthUpdateActionDelete,
+					ID:     authID,
+				}}
+			},
+		},
+	}
+
+	service.applyManagementConfigUpdate(&config.Config{})
+
+	updated, ok := manager.GetByID(authID)
+	if !ok || updated == nil {
+		t.Fatalf("expected auth %s to remain as disabled snapshot", authID)
+	}
+	if !updated.Disabled || updated.Status != coreauth.StatusDisabled {
+		t.Fatalf("expected auth to be disabled, got disabled=%v status=%s", updated.Disabled, updated.Status)
 	}
 }
 
