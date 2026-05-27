@@ -6,6 +6,7 @@ import "strings"
 type ProviderAPIKeyEntry struct {
 	APIKey   string `yaml:"api-key" json:"api-key"`
 	ProxyURL string `yaml:"proxy-url,omitempty" json:"proxy-url,omitempty"`
+	Remark   string `yaml:"remark,omitempty" json:"remark,omitempty"`
 }
 
 // NormalizeProviderAPIKeyEntries trims and removes empty API key entries.
@@ -21,6 +22,7 @@ func NormalizeProviderAPIKeyEntries(entries []ProviderAPIKeyEntry) []ProviderAPI
 			continue
 		}
 		proxyURL := strings.TrimSpace(entries[i].ProxyURL)
+		remark := strings.TrimSpace(entries[i].Remark)
 		unique := key + "|" + proxyURL
 		if _, exists := seen[unique]; exists {
 			continue
@@ -29,6 +31,7 @@ func NormalizeProviderAPIKeyEntries(entries []ProviderAPIKeyEntry) []ProviderAPI
 		out = append(out, ProviderAPIKeyEntry{
 			APIKey:   key,
 			ProxyURL: proxyURL,
+			Remark:   remark,
 		})
 	}
 	if len(out) == 0 {
@@ -61,6 +64,9 @@ func ProviderAPIKeyEntriesEqual(left, right []ProviderAPIKeyEntry) bool {
 			return false
 		}
 		if strings.TrimSpace(left[i].ProxyURL) != strings.TrimSpace(right[i].ProxyURL) {
+			return false
+		}
+		if strings.TrimSpace(left[i].Remark) != strings.TrimSpace(right[i].Remark) {
 			return false
 		}
 	}
