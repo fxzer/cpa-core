@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/config"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/watcher/synthesizer"
-	coreauth "github.com/router-for-me/CLIProxyAPI/v7/sdk/cliproxy/auth"
+	"github.com/fxzer/cpa-core/v7/internal/config"
+	"github.com/fxzer/cpa-core/v7/internal/watcher/synthesizer"
+	coreauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
 	"gopkg.in/yaml.v3"
 )
 

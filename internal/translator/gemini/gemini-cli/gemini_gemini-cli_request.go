@@ -8,8 +8,8 @@ package geminiCLI
 import (
 	"fmt"
 
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/translator/gemini/common"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/util"
+	"github.com/fxzer/cpa-core/v7/internal/translator/gemini/common"
+	"github.com/fxzer/cpa-core/v7/internal/util"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 )

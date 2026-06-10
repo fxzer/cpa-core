@@ -23,26 +23,26 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/access"
-	managementHandlers "github.com/router-for-me/CLIProxyAPI/v7/internal/api/handlers/management"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/api/middleware"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/api/modules"
-	ampmodule "github.com/router-for-me/CLIProxyAPI/v7/internal/api/modules/amp"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/cache"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/config"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/home"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/logging"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/managementasset"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/redisqueue"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/requestevents"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/util"
-	sdkaccess "github.com/router-for-me/CLIProxyAPI/v7/sdk/access"
-	"github.com/router-for-me/CLIProxyAPI/v7/sdk/api/handlers"
-	"github.com/router-for-me/CLIProxyAPI/v7/sdk/api/handlers/claude"
-	"github.com/router-for-me/CLIProxyAPI/v7/sdk/api/handlers/gemini"
-	"github.com/router-for-me/CLIProxyAPI/v7/sdk/api/handlers/openai"
-	sdkAuth "github.com/router-for-me/CLIProxyAPI/v7/sdk/auth"
-	"github.com/router-for-me/CLIProxyAPI/v7/sdk/cliproxy/auth"
+	"github.com/fxzer/cpa-core/v7/internal/access"
+	managementHandlers "github.com/fxzer/cpa-core/v7/internal/api/handlers/management"
+	"github.com/fxzer/cpa-core/v7/internal/api/middleware"
+	"github.com/fxzer/cpa-core/v7/internal/api/modules"
+	ampmodule "github.com/fxzer/cpa-core/v7/internal/api/modules/amp"
+	"github.com/fxzer/cpa-core/v7/internal/cache"
+	"github.com/fxzer/cpa-core/v7/internal/config"
+	"github.com/fxzer/cpa-core/v7/internal/home"
+	"github.com/fxzer/cpa-core/v7/internal/logging"
+	"github.com/fxzer/cpa-core/v7/internal/managementasset"
+	"github.com/fxzer/cpa-core/v7/internal/redisqueue"
+	"github.com/fxzer/cpa-core/v7/internal/requestevents"
+	"github.com/fxzer/cpa-core/v7/internal/util"
+	sdkaccess "github.com/fxzer/cpa-core/v7/sdk/access"
+	"github.com/fxzer/cpa-core/v7/sdk/api/handlers"
+	"github.com/fxzer/cpa-core/v7/sdk/api/handlers/claude"
+	"github.com/fxzer/cpa-core/v7/sdk/api/handlers/gemini"
+	"github.com/fxzer/cpa-core/v7/sdk/api/handlers/openai"
+	sdkAuth "github.com/fxzer/cpa-core/v7/sdk/auth"
+	"github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/http2"
 	"gopkg.in/yaml.v3"
@@ -366,7 +366,7 @@ func (s *Server) homeHeartbeatMiddleware() gin.HandlerFunc {
 		}
 		if c != nil && c.Request != nil {
 			path := c.Request.URL.Path
-			if strings.HasPrefix(path, "/v0/management/") || path == "/v0/management" || path == "/management.html" {
+			if strings.HasPrefix(path, "/v0/management/") || path == "/v0/management" || path == "/web.html" {
 				c.Next()
 				return
 			}
@@ -394,7 +394,7 @@ func (s *Server) setupRoutes() {
 	s.engine.GET("/healthz", healthzHandler)
 	s.engine.HEAD("/healthz", healthzHandler)
 
-	s.engine.GET("/management.html", s.serveManagementControlPanel)
+	s.engine.GET("/web.html", s.serveManagementControlPanel)
 	openaiHandlers := openai.NewOpenAIAPIHandler(s.handlers)
 	geminiHandlers := gemini.NewGeminiAPIHandler(s.handlers)
 	geminiCLIHandlers := gemini.NewGeminiCLIAPIHandler(s.handlers)
@@ -775,7 +775,7 @@ func (s *Server) serveManagementControlPanel(c *gin.Context) {
 
 	if _, err := os.Stat(filePath); err != nil {
 		if os.IsNotExist(err) {
-			// Synchronously ensure management.html is available with a detached context.
+			// Synchronously ensure web.html is available with a detached context.
 			// Control panel bootstrap should not be canceled by client disconnects.
 			if !managementasset.EnsureLatestManagementHTML(context.Background(), managementasset.StaticDir(s.configFilePath), cfg.ProxyURL, cfg.RemoteManagement.PanelGitHubRepository) {
 				c.AbortWithStatus(http.StatusNotFound)

@@ -8,9 +8,9 @@ import (
 	"time"
 
 	tls "github.com/refraction-networking/utls"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/config"
-	cliproxyauth "github.com/router-for-me/CLIProxyAPI/v7/sdk/cliproxy/auth"
-	"github.com/router-for-me/CLIProxyAPI/v7/sdk/proxyutil"
+	"github.com/fxzer/cpa-core/v7/internal/config"
+	cliproxyauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
+	"github.com/fxzer/cpa-core/v7/sdk/proxyutil"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/proxy"
@@ -149,6 +149,11 @@ func (f *fallbackRoundTripper) RoundTrip(req *http.Request) (*http.Response, err
 	return f.fallback.RoundTrip(req)
 }
 
+var (
+	utlsTransportsMu sync.RWMutex
+	utlsTransports   = make(map[string]http.RoundTripper)
+)
+
 // NewUtlsHTTPClient creates an HTTP client using utls Chrome TLS fingerprint.
 // Use this for Claude API requests to match real Claude Code's TLS behavior.
 // Falls back to standard transport for non-HTTPS requests.
@@ -161,25 +166,38 @@ func NewUtlsHTTPClient(cfg *config.Config, auth *cliproxyauth.Auth, timeout time
 		proxyURL = strings.TrimSpace(cfg.ProxyURL)
 	}
 
-	utlsRT := newUtlsRoundTripper(proxyURL)
+	utlsTransportsMu.RLock()
+	rt, ok := utlsTransports[proxyURL]
+	utlsTransportsMu.RUnlock()
+	if !ok {
+		utlsTransportsMu.Lock()
+		rt, ok = utlsTransports[proxyURL]
+		if !ok {
+			utlsRT := newUtlsRoundTripper(proxyURL)
 
-	var standardTransport http.RoundTripper = &http.Transport{
-		DialContext: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).DialContext,
-	}
-	if proxyURL != "" {
-		if transport := buildProxyTransport(proxyURL); transport != nil {
-			standardTransport = transport
+			var standardTransport http.RoundTripper = &http.Transport{
+				DialContext: (&net.Dialer{
+					Timeout:   30 * time.Second,
+					KeepAlive: 30 * time.Second,
+				}).DialContext,
+			}
+			if proxyURL != "" {
+				if transport := buildProxyTransport(proxyURL); transport != nil {
+					standardTransport = transport
+				}
+			}
+
+			rt = &fallbackRoundTripper{
+				utls:     utlsRT,
+				fallback: standardTransport,
+			}
+			utlsTransports[proxyURL] = rt
 		}
+		utlsTransportsMu.Unlock()
 	}
 
 	client := &http.Client{
-		Transport: &fallbackRoundTripper{
-			utls:     utlsRT,
-			fallback: standardTransport,
-		},
+		Transport: rt,
 	}
 	if timeout > 0 {
 		client.Timeout = timeout

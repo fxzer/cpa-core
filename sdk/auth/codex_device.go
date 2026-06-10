@@ -13,11 +13,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/auth/codex"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/browser"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/config"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/util"
-	coreauth "github.com/router-for-me/CLIProxyAPI/v7/sdk/cliproxy/auth"
+	"github.com/fxzer/cpa-core/v7/internal/auth/codex"
+	"github.com/fxzer/cpa-core/v7/internal/browser"
+	"github.com/fxzer/cpa-core/v7/internal/config"
+	"github.com/fxzer/cpa-core/v7/internal/util"
+	coreauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
 	log "github.com/sirupsen/logrus"
 )
 

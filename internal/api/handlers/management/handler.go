@@ -13,10 +13,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/buildinfo"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/config"
-	sdkAuth "github.com/router-for-me/CLIProxyAPI/v7/sdk/auth"
-	coreauth "github.com/router-for-me/CLIProxyAPI/v7/sdk/cliproxy/auth"
+	"github.com/fxzer/cpa-core/v7/internal/buildinfo"
+	"github.com/fxzer/cpa-core/v7/internal/config"
+	sdkAuth "github.com/fxzer/cpa-core/v7/sdk/auth"
+	coreauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/yaml.v3"
 )

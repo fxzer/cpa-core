@@ -10,7 +10,7 @@
 
 ## fxzer fork：管理 API 扩展说明
 
-本说明对应 **[fxzer/CLIProxyAPI](https://github.com/fxzer/CLIProxyAPI)** 分支中与**配套管理前端**相关的后端改动摘要：
+本说明对应 **[fxzer/cpa-core](https://github.com/fxzer/cpa-core)** 分支中与**配套管理前端**相关的后端改动摘要：
 
 | 类别 | 内容 |
 |------|------|

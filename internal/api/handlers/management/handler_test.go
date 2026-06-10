@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/config"
+	"github.com/fxzer/cpa-core/v7/internal/config"
 	"gopkg.in/yaml.v3"
 )
 

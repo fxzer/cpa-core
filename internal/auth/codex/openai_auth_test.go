@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/config"
+	"github.com/fxzer/cpa-core/v7/internal/config"
 )
 
 type roundTripFunc func(*http.Request) (*http.Response, error)

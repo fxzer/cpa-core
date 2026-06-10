@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/config"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/registry"
-	coreauth "github.com/router-for-me/CLIProxyAPI/v7/sdk/cliproxy/auth"
+	"github.com/fxzer/cpa-core/v7/internal/config"
+	"github.com/fxzer/cpa-core/v7/internal/registry"
+	coreauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
 )
 
 type authFileModelConfigRow struct {

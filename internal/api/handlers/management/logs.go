@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/logging"
+	"github.com/fxzer/cpa-core/v7/internal/logging"
 )
 
 const (

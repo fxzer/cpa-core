@@ -8,11 +8,11 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/interfaces"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/registry"
-	coreauth "github.com/router-for-me/CLIProxyAPI/v7/sdk/cliproxy/auth"
-	coreexecutor "github.com/router-for-me/CLIProxyAPI/v7/sdk/cliproxy/executor"
-	sdkconfig "github.com/router-for-me/CLIProxyAPI/v7/sdk/config"
+	"github.com/fxzer/cpa-core/v7/internal/interfaces"
+	"github.com/fxzer/cpa-core/v7/internal/registry"
+	coreauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
+	coreexecutor "github.com/fxzer/cpa-core/v7/sdk/cliproxy/executor"
+	sdkconfig "github.com/fxzer/cpa-core/v7/sdk/config"
 )
 
 type failOnceStreamExecutor struct {

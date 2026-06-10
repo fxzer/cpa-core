@@ -4,11 +4,12 @@ import (
 	"context"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/config"
-	cliproxyauth "github.com/router-for-me/CLIProxyAPI/v7/sdk/cliproxy/auth"
-	"github.com/router-for-me/CLIProxyAPI/v7/sdk/proxyutil"
+	"github.com/fxzer/cpa-core/v7/internal/config"
+	cliproxyauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
+	"github.com/fxzer/cpa-core/v7/sdk/proxyutil"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -61,6 +62,11 @@ func NewProxyAwareHTTPClient(ctx context.Context, cfg *config.Config, auth *clip
 	return httpClient
 }
 
+var (
+	proxyTransportsMu sync.RWMutex
+	proxyTransports   = make(map[string]*http.Transport)
+)
+
 // buildProxyTransport creates an HTTP transport configured for the given proxy URL.
 // It supports SOCKS5, HTTP, and HTTPS proxy protocols.
 //
@@ -70,10 +76,28 @@ func NewProxyAwareHTTPClient(ctx context.Context, cfg *config.Config, auth *clip
 // Returns:
 //   - *http.Transport: A configured transport, or nil if the proxy URL is invalid
 func buildProxyTransport(proxyURL string) *http.Transport {
+	proxyURL = strings.TrimSpace(proxyURL)
+	if proxyURL == "" {
+		return nil
+	}
+	proxyTransportsMu.RLock()
+	t, ok := proxyTransports[proxyURL]
+	proxyTransportsMu.RUnlock()
+	if ok {
+		return t
+	}
+
+	proxyTransportsMu.Lock()
+	defer proxyTransportsMu.Unlock()
+	if t, ok = proxyTransports[proxyURL]; ok {
+		return t
+	}
+
 	transport, _, errBuild := proxyutil.BuildHTTPTransport(proxyURL)
 	if errBuild != nil {
 		log.Errorf("%v", errBuild)
 		return nil
 	}
+	proxyTransports[proxyURL] = transport
 	return transport
 }

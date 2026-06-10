@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/config"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/watcher/diff"
-	coreauth "github.com/router-for-me/CLIProxyAPI/v7/sdk/cliproxy/auth"
+	"github.com/fxzer/cpa-core/v7/internal/config"
+	"github.com/fxzer/cpa-core/v7/internal/watcher/diff"
+	coreauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
 )
 
 func providerKeyLabel(prefix, name, fallback string) string {

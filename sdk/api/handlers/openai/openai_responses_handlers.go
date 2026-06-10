@@ -16,10 +16,10 @@ import (
 	"sort"
 
 	"github.com/gin-gonic/gin"
-	. "github.com/router-for-me/CLIProxyAPI/v7/internal/constant"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/interfaces"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/registry"
-	"github.com/router-for-me/CLIProxyAPI/v7/sdk/api/handlers"
+	. "github.com/fxzer/cpa-core/v7/internal/constant"
+	"github.com/fxzer/cpa-core/v7/internal/interfaces"
+	"github.com/fxzer/cpa-core/v7/internal/registry"
+	"github.com/fxzer/cpa-core/v7/sdk/api/handlers"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 )

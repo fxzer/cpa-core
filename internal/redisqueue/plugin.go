@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	internallogging "github.com/router-for-me/CLIProxyAPI/v7/internal/logging"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/requestevents"
-	coreusage "github.com/router-for-me/CLIProxyAPI/v7/sdk/cliproxy/usage"
+	internallogging "github.com/fxzer/cpa-core/v7/internal/logging"
+	"github.com/fxzer/cpa-core/v7/internal/requestevents"
+	coreusage "github.com/fxzer/cpa-core/v7/sdk/cliproxy/usage"
 )
 
 func init() {

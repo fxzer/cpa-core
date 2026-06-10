@@ -10,7 +10,7 @@ So you can use local or multi-account CLI access with OpenAI(include Responses)/
 
 ## fxzer fork: Management API extensions
 
-Maintained in **[fxzer/CLIProxyAPI](https://github.com/fxzer/CLIProxyAPI)** (public mirror / backup of this tree). Summary of **backend-only** deltas useful for the paired admin UI:
+Maintained in **[fxzer/cpa-core](https://github.com/fxzer/cpa-core)** (public mirror / backup of this tree). Summary of **backend-only** deltas useful for the paired admin UI:
 
 | Area | Change |
 |------|--------|

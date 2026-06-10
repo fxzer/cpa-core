@@ -3,8 +3,8 @@ package cliproxy
 import (
 	"context"
 
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/watcher"
-	"github.com/router-for-me/CLIProxyAPI/v7/sdk/config"
+	"github.com/fxzer/cpa-core/v7/internal/watcher"
+	"github.com/fxzer/cpa-core/v7/sdk/config"
 )
 
 // NewFileTokenClientProvider returns the default token-backed client loader.

@@ -16,14 +16,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	internalconfig "github.com/router-for-me/CLIProxyAPI/v7/internal/config"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/home"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/logging"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/registry"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/thinking"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/util"
-	cliproxyexecutor "github.com/router-for-me/CLIProxyAPI/v7/sdk/cliproxy/executor"
-	coreusage "github.com/router-for-me/CLIProxyAPI/v7/sdk/cliproxy/usage"
+	internalconfig "github.com/fxzer/cpa-core/v7/internal/config"
+	"github.com/fxzer/cpa-core/v7/internal/home"
+	"github.com/fxzer/cpa-core/v7/internal/logging"
+	"github.com/fxzer/cpa-core/v7/internal/registry"
+	"github.com/fxzer/cpa-core/v7/internal/thinking"
+	"github.com/fxzer/cpa-core/v7/internal/util"
+	cliproxyexecutor "github.com/fxzer/cpa-core/v7/sdk/cliproxy/executor"
+	coreusage "github.com/fxzer/cpa-core/v7/sdk/cliproxy/usage"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -2611,10 +2611,11 @@ func isRequestInvalidError(err error) bool {
 	status := statusCodeFromError(err)
 	switch status {
 	case http.StatusBadRequest:
-		msg := err.Error()
-		return strings.Contains(msg, "invalid_request_error") ||
+		msg := strings.ToUpper(err.Error())
+		return strings.Contains(msg, "INVALID_REQUEST") ||
 			strings.Contains(msg, "INVALID_ARGUMENT") ||
-			strings.Contains(msg, "FAILED_PRECONDITION")
+			strings.Contains(msg, "FAILED_PRECONDITION") ||
+			strings.Contains(msg, "CONTEXT_LENGTH_EXCEEDED")
 	case http.StatusNotFound:
 		return isRequestScopedNotFoundMessage(err.Error())
 	case http.StatusUnprocessableEntity:

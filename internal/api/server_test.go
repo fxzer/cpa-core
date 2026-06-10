@@ -11,13 +11,13 @@ import (
 	"time"
 
 	gin "github.com/gin-gonic/gin"
-	proxyconfig "github.com/router-for-me/CLIProxyAPI/v7/internal/config"
-	internallogging "github.com/router-for-me/CLIProxyAPI/v7/internal/logging"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/redisqueue"
-	"github.com/router-for-me/CLIProxyAPI/v7/internal/registry"
-	sdkaccess "github.com/router-for-me/CLIProxyAPI/v7/sdk/access"
-	"github.com/router-for-me/CLIProxyAPI/v7/sdk/cliproxy/auth"
-	sdkconfig "github.com/router-for-me/CLIProxyAPI/v7/sdk/config"
+	proxyconfig "github.com/fxzer/cpa-core/v7/internal/config"
+	internallogging "github.com/fxzer/cpa-core/v7/internal/logging"
+	"github.com/fxzer/cpa-core/v7/internal/redisqueue"
+	"github.com/fxzer/cpa-core/v7/internal/registry"
+	sdkaccess "github.com/fxzer/cpa-core/v7/sdk/access"
+	"github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
+	sdkconfig "github.com/fxzer/cpa-core/v7/sdk/config"
 )
 
 func newTestServer(t *testing.T) *Server {
@@ -163,7 +163,7 @@ func TestHomeEnabledHidesManagementEndpointsAndControlPanel(t *testing.T) {
 	})
 
 	t.Run("management control panel returns 404", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/management.html", nil)
+		req := httptest.NewRequest(http.MethodGet, "/web.html", nil)
 		rr := httptest.NewRecorder()
 		server.engine.ServeHTTP(rr, req)
 		if rr.Code != http.StatusNotFound {
