@@ -18,7 +18,7 @@
 | | `GET /v0/management/auth-refresh-queue`：认证自动刷新队列快照（如 `next_refresh_at`、凭证元数据等）。 |
 | **实现要点** | Redis 用量队列增加 `PeekAll()`（只读、不弹出）；新增/扩展 handler：用量聚合、刷新队列。 |
 
-**配套管理前端（React）：** **[fxzer/cliproxyapi-management](https://github.com/fxzer/cliproxyapi-management)**（`https://github.com/fxzer/cliproxyapi-management.git`）— 监控中心、凭证中心、Chart.js 用量视图及对应 API 客户端。构建产物为 `management.html` / 静态资源，与同一 Management API 主机一并部署（详见该仓库 README **「配对后端」** 一节）。
+**配套管理前端（React）：** **[fxzer/cpa-web](https://github.com/fxzer/cpa-web)**（`https://github.com/fxzer/cpa-web.git`）— 监控中心、凭证中心、Chart.js 用量视图及对应 API 客户端。构建产物为 `management.html` / 静态资源，与同一 Management API 主机一并部署（详见该仓库 README **「配对后端」** 一节）。
 
 ## 赞助商
 

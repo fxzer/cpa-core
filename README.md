@@ -18,7 +18,7 @@ Maintained in **[fxzer/cpa-core](https://github.com/fxzer/cpa-core)** (public mi
 | | `GET /v0/management/auth-refresh-queue` — auto-refresh queue snapshot (e.g. `next_refresh_at`, credential metadata). |
 | **Internals** | Redis usage queue: `PeekAll()` (read without dequeue). New/extended handlers: usage aggregation, auth refresh queue. |
 
-**Paired web UI (React):** **[fxzer/cliproxyapi-management](https://github.com/fxzer/cliproxyapi-management)** (`https://github.com/fxzer/cliproxyapi-management.git`) — monitoring center, credential center, Chart.js usage views, and shared usage/auth-queue clients. Build outputs `management.html` / static bundle for the same Management API host (see that repo’s README → **「配对后端」** section).
+**Paired web UI (React):** **[fxzer/cpa-web](https://github.com/fxzer/cpa-web)** (`https://github.com/fxzer/cpa-web.git`) — monitoring center, credential center, Chart.js usage views, and shared usage/auth-queue clients. Build outputs `management.html` / static bundle for the same Management API host (see that repo’s README → **「配对后端」** section).
 
 ## Sponsor
 
