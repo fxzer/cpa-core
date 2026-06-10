@@ -34,6 +34,7 @@ import (
 	"github.com/router-for-me/CLIProxyAPI/v7/internal/logging"
 	"github.com/router-for-me/CLIProxyAPI/v7/internal/managementasset"
 	"github.com/router-for-me/CLIProxyAPI/v7/internal/redisqueue"
+	"github.com/router-for-me/CLIProxyAPI/v7/internal/requestevents"
 	"github.com/router-for-me/CLIProxyAPI/v7/internal/util"
 	sdkaccess "github.com/router-for-me/CLIProxyAPI/v7/sdk/access"
 	"github.com/router-for-me/CLIProxyAPI/v7/sdk/api/handlers"
@@ -73,18 +74,14 @@ func defaultRequestLoggerFactory(cfg *config.Config, configPath string) logging.
 	return logger
 }
 
-func configureUsageArchive(cfg *config.Config) {
-	logDir := logging.ResolveLogDirectory(cfg)
-	if strings.TrimSpace(logDir) == "" {
-		redisqueue.SetUsageArchivePath("")
+func configureRequestEvents(cfg *config.Config) {
+	if cfg == nil || !cfg.Usage.PersistenceEnabled() {
+		requestevents.Stop()
 		return
 	}
-	if !filepath.IsAbs(logDir) {
-		if abs, err := filepath.Abs(logDir); err == nil {
-			logDir = abs
-		}
+	if _, err := requestevents.Start(context.Background(), cfg); err != nil {
+		log.WithError(err).Warn("failed to start request event persistence")
 	}
-	redisqueue.SetUsageArchivePath(filepath.Join(logDir, "usage-events.jsonl"))
 }
 
 // WithMiddleware appends additional Gin middleware during server construction.
@@ -306,7 +303,7 @@ func NewServer(cfg *config.Config, authManager *auth.Manager, accessManager *sdk
 	}
 	logDir := logging.ResolveLogDirectory(cfg)
 	s.mgmt.SetLogDirectory(logDir)
-	configureUsageArchive(cfg)
+	configureRequestEvents(cfg)
 	if optionState.postAuthHook != nil {
 		s.mgmt.SetPostAuthHook(optionState.postAuthHook)
 	}
@@ -627,8 +624,14 @@ func (s *Server) registerManagementRoutes() {
 		mgmt.PATCH("/api-keys", s.mgmt.PatchAPIKeys)
 		mgmt.DELETE("/api-keys", s.mgmt.DeleteAPIKeys)
 		mgmt.GET("/api-key-usage", s.mgmt.GetAPIKeyUsage)
-		mgmt.GET("/usage-queue", s.mgmt.GetUsageQueue)
-		mgmt.GET("/usage", s.mgmt.GetUsage)
+		mgmt.GET("/request-events", s.mgmt.GetRequestEvents)
+		mgmt.GET("/request-events/status", s.mgmt.GetRequestEventsStatus)
+		mgmt.GET("/request-events/export", s.mgmt.ExportRequestEvents)
+		mgmt.POST("/request-events/import", s.mgmt.ImportRequestEvents)
+		mgmt.DELETE("/request-events", s.mgmt.DeleteRequestEvents)
+		mgmt.GET("/model-prices", s.mgmt.GetModelPrices)
+		mgmt.PUT("/model-prices", s.mgmt.PutModelPrices)
+		mgmt.POST("/model-prices/sync-litellm", s.mgmt.SyncModelPrices)
 		mgmt.GET("/auth-refresh-queue", s.mgmt.GetAuthRefreshQueue)
 
 		mgmt.GET("/gemini-api-key", s.mgmt.GetGeminiKeys)
@@ -1405,7 +1408,7 @@ func (s *Server) UpdateClients(cfg *config.Config) {
 		if err := logging.ConfigureLogOutput(cfg); err != nil {
 			log.Errorf("failed to reconfigure log output: %v", err)
 		}
-		configureUsageArchive(cfg)
+		configureRequestEvents(cfg)
 	}
 
 	if oldCfg == nil || oldCfg.UsageStatisticsEnabled != cfg.UsageStatisticsEnabled {

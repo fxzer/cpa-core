@@ -86,7 +86,7 @@ func TestHealthz(t *testing.T) {
 	})
 }
 
-func TestManagementUsageRequiresManagementAuthAndPopsArray(t *testing.T) {
+func TestManagementRequestEventsRequiresManagementAuth(t *testing.T) {
 	t.Setenv("MANAGEMENT_PASSWORD", "test-management-key")
 
 	prevQueueEnabled := redisqueue.Enabled()
@@ -101,31 +101,31 @@ func TestManagementUsageRequiresManagementAuthAndPopsArray(t *testing.T) {
 	redisqueue.Enqueue([]byte(`{"id":1}`))
 	redisqueue.Enqueue([]byte(`{"id":2}`))
 
-	missingKeyReq := httptest.NewRequest(http.MethodGet, "/v0/management/usage-queue?count=2", nil)
+	missingKeyReq := httptest.NewRequest(http.MethodGet, "/v0/management/request-events?limit=2", nil)
 	missingKeyRR := httptest.NewRecorder()
 	server.engine.ServeHTTP(missingKeyRR, missingKeyReq)
 	if missingKeyRR.Code != http.StatusUnauthorized {
 		t.Fatalf("missing key status = %d, want %d body=%s", missingKeyRR.Code, http.StatusUnauthorized, missingKeyRR.Body.String())
 	}
 
-	usageReq := httptest.NewRequest(http.MethodGet, "/v0/management/usage?limit=2", nil)
+	usageReq := httptest.NewRequest(http.MethodGet, "/v0/management/request-events?limit=2", nil)
 	usageReq.Header.Set("Authorization", "Bearer test-management-key")
 	usageRR := httptest.NewRecorder()
 	server.engine.ServeHTTP(usageRR, usageReq)
 	if usageRR.Code != http.StatusOK {
-		t.Fatalf("usage status = %d, want %d body=%s", usageRR.Code, http.StatusOK, usageRR.Body.String())
+		t.Fatalf("request-events status = %d, want %d body=%s", usageRR.Code, http.StatusOK, usageRR.Body.String())
 	}
 	var usagePayload struct {
-		Requests []json.RawMessage `json:"requests"`
+		Items []json.RawMessage `json:"items"`
 	}
 	if errUnmarshal := json.Unmarshal(usageRR.Body.Bytes(), &usagePayload); errUnmarshal != nil {
-		t.Fatalf("unmarshal usage response: %v body=%s", errUnmarshal, usageRR.Body.String())
+		t.Fatalf("unmarshal request-events response: %v body=%s", errUnmarshal, usageRR.Body.String())
 	}
-	if len(usagePayload.Requests) != 0 {
-		t.Fatalf("usage response records = %d, want 0 for records without timestamps", len(usagePayload.Requests))
+	if len(usagePayload.Items) != 0 {
+		t.Fatalf("request-events items = %d, want 0 on empty store", len(usagePayload.Items))
 	}
 
-	authReq := httptest.NewRequest(http.MethodGet, "/v0/management/usage-queue?count=2", nil)
+	authReq := httptest.NewRequest(http.MethodGet, "/v0/management/request-events/status", nil)
 	authReq.Header.Set("Authorization", "Bearer test-management-key")
 	authRR := httptest.NewRecorder()
 	server.engine.ServeHTTP(authRR, authReq)
@@ -133,27 +133,16 @@ func TestManagementUsageRequiresManagementAuthAndPopsArray(t *testing.T) {
 		t.Fatalf("authenticated status = %d, want %d body=%s", authRR.Code, http.StatusOK, authRR.Body.String())
 	}
 
-	var payload []json.RawMessage
+	var payload map[string]any
 	if errUnmarshal := json.Unmarshal(authRR.Body.Bytes(), &payload); errUnmarshal != nil {
 		t.Fatalf("unmarshal response: %v body=%s", errUnmarshal, authRR.Body.String())
 	}
-	if len(payload) != 2 {
-		t.Fatalf("response records = %d, want 2", len(payload))
-	}
-	for i, raw := range payload {
-		var record struct {
-			ID int `json:"id"`
-		}
-		if errUnmarshal := json.Unmarshal(raw, &record); errUnmarshal != nil {
-			t.Fatalf("unmarshal record %d: %v", i, errUnmarshal)
-		}
-		if record.ID != i+1 {
-			t.Fatalf("record %d id = %d, want %d", i, record.ID, i+1)
-		}
+	if _, ok := payload["event_count"]; !ok {
+		t.Fatalf("request-events status missing event_count: %v", payload)
 	}
 
-	if remaining := redisqueue.PopOldest(1); len(remaining) != 0 {
-		t.Fatalf("remaining queue = %q, want empty", remaining)
+	if remaining := redisqueue.PopOldest(2); len(remaining) != 2 {
+		t.Fatalf("remaining queue = %d items, want 2 (request-events must not drain redis queue)", len(remaining))
 	}
 }
 

@@ -64,7 +64,6 @@ func Enqueue(payload []byte) {
 		return
 	}
 	published := global.publishToSubscribers(payload)
-	appendUsageArchive(payload)
 	if published {
 		return
 	}

@@ -559,19 +559,19 @@ func TestRedisProtocol_SubscribeUsageBroadcastsAndSkipsQueue(t *testing.T) {
 		t.Fatalf("expected subscribed usage to skip queue, got %q", string(item))
 	}
 
-	managementReq := httptest.NewRequest(http.MethodGet, "/v0/management/usage-queue?count=1", nil)
+	managementReq := httptest.NewRequest(http.MethodGet, "/v0/management/request-events/status", nil)
 	managementReq.Header.Set("Authorization", "Bearer "+managementPassword)
 	managementRR := httptest.NewRecorder()
 	server.engine.ServeHTTP(managementRR, managementReq)
 	if managementRR.Code != http.StatusOK {
-		t.Fatalf("management usage status = %d, want %d body=%s", managementRR.Code, http.StatusOK, managementRR.Body.String())
+		t.Fatalf("management request-events status = %d, want %d body=%s", managementRR.Code, http.StatusOK, managementRR.Body.String())
 	}
-	var managementPayload []json.RawMessage
+	var managementPayload map[string]any
 	if errUnmarshal := json.Unmarshal(managementRR.Body.Bytes(), &managementPayload); errUnmarshal != nil {
-		t.Fatalf("unmarshal management usage response: %v", errUnmarshal)
+		t.Fatalf("unmarshal request-events status response: %v", errUnmarshal)
 	}
-	if len(managementPayload) != 0 {
-		t.Fatalf("expected management usage queue to be empty, got %s", managementRR.Body.String())
+	if _, ok := managementPayload["event_count"]; !ok {
+		t.Fatalf("request-events status missing event_count: %v", managementPayload)
 	}
 }
 
