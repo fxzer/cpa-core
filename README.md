@@ -30,69 +30,112 @@ cpa-core :8317
 
 ```bash
 # 克隆
- git clone https://github.com/fxzer/cpa-core.git
- cd cpa-core
+git clone https://github.com/fxzer/cpa-core.git
+cd cpa-core
 
 # 配置
- cp config.example.yaml config.yaml
- # 编辑 config.yaml，设置管理密钥等
+cp config.example.yaml config.yaml
+# 编辑 config.yaml，设置管理密钥等
 
 # 启动
- go run ./cmd/server -config config.yaml
+go run ./cmd/server -config config.yaml
 ```
 
 访问 `http://localhost:8317/healthz` 确认服务运行正常。
-
-### 部署管理界面
-
-```bash
-# 克隆前端仓库
- git clone https://github.com/fxzer/cpa-web.git
- cd cpa-web
-
-# 构建前端
- npm install && npm run build
-
-# 部署到 cpa-core static 目录
- cp dist/index.html /path/to/cpa-core/static/web.html
-
-# 或使用前端的一键部署脚本
- ./deploy.sh --to /path/to/cpa-core/static
-```
-
-然后重启 cpa-core 服务，访问 `http://localhost:8317/web.html`。
 
 ---
 
 ## 部署
 
+### 一键部署脚本
+
+```bash
+# 编译并部署到 ~/cpa-core
+./deploy.sh --to ~/cpa-core
+
+# 编译并部署，同时部署前端 web.html
+./deploy.sh --to ~/cpa-core --frontend ../cpa-web
+
+# 跳过编译，只部署已有产物
+./deploy.sh --skip-build --to ~/cpa-core
+```
+
+脚本会自动：
+- 创建 `static/`、`var/`、`logs/`、`auths/` 目录
+- 备份旧二进制
+- 如果 `~/.config/cpa.yml` 存在，自动创建配置软链接
+
 ### 手动编译
 
 ```bash
- go build -o cpa-core ./cmd/server
- ./cpa-core -config config.yaml
+go build -o cpa-core ./cmd/server
+./cpa-core -config config.yaml
 ```
 
 ### Docker
 
 ```bash
- docker build -t cpa-core .
- docker-compose up -d
+docker build -t cpa-core .
+docker-compose up -d
 ```
 
 ### 管理界面
 
-管理界面为单文件 HTML（web.html），由 cpa-core 托管。部署方式见上方「部署管理界面」。
-也可以直接从 GitHub Releases 下载预构建的 web.html：
+管理界面为单文件 HTML（web.html），由 cpa-core 托管。部署方式：
 
 ```bash
- curl -L -o web.html https://github.com/fxzer/cpa-web/releases/latest/download/web.html
- cp web.html /opt/cpa-core/static/web.html
+# 方式一：本地构建部署
+cd ../cpa-web
+npm run build
+./deploy.sh --to ~/cpa-core/static
+
+# 方式二：从 GitHub Releases 下载
+curl -L -o web.html https://github.com/fxzer/cpa-web/releases/latest/download/web.html
+cp web.html ~/cpa-core/static/web.html
 ```
 
 ---
 
-## fxzer Fork：Management API 扩展
+## 配置修改与重启
+
+### 修改配置文件后需要重启吗？
+
+**分两种方式：**
+
+**方式一：通过管理界面的「配置文件」页面编辑**
+- 在 cpa-web 的「配置文件」页直接编辑 YAML
+- 编辑后点击「保存重载」，配置会热生效，**无需重启**
+- 支持 API Key、提供商配置、模型别名等热加载
+
+**方式二：直接编辑磁盘上的配置文件**
+- 编辑 `~/.config/cpa.yml`（或 `config.yaml`）
+- 修改后**需要重启服务**才能生效
+
+### 重启服务
+
+```bash
+# 1. 找到 cpa-core 进程
+ps aux | grep cpa-core
+
+# 2. 停止（用 PID 或进程名）
+kill <PID>
+# 或
+pkill cpa-core
+
+# 3. 重新启动
+~/cpa-core/cpa-core -config ~/cpa-core/config.yaml
+
+# 如需指定管理面板静态目录（可选）
+MANAGEMENT_STATIC_PATH=~/cpa-core/static ~/cpa-core/cpa-core -config ~/cpa-core/config.yaml
+# 后台启动（关闭终端后持续运行）
+nohup MANAGEMENT_STATIC_PATH=~/cpa-core/static ~/cpa-core/cpa-core -config ~/cpa-core/config.yaml > ~/cpa-core/var/stdout.log 2>&1 &```
+
+> 提示：建议将启动命令写入脚本或创建 LaunchAgent，避免每次手动输入。
+> 后续版本会提供 systemd/LaunchAgent 模板。
+
+---
+
+## 管理 API（fxzer Fork）
 
 本 fork 在官方上游基础上新增了以下 Management API，用于支撑 cpa-web 的管理功能：
 
@@ -112,7 +155,7 @@ cpa-core :8317
 
 - Redis Queue 监控：新增 `PeekAll()` 方法
 - SQLite 请求事件持久化（默认开启）
-- 管理页面自动更新机制（GitHub Release 检测 + 由底兜底 URL）
+- 管理页面自动更新机制（GitHub Release 检测 + 直链兜底）
 - 统一管理页面文件名为 `web.html`
 
 ---
