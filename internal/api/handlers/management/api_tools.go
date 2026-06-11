@@ -56,56 +56,6 @@ type apiCallResponse struct {
 	Body       string              `json:"body"`
 }
 
-// APICall makes a generic HTTP request on behalf of the management API caller.
-// It is protected by the management middleware.
-//
-// Endpoint:
-//
-//	POST /v0/management/api-call
-//
-// Authentication:
-//
-//	Same as other management APIs (requires a management key and remote-management rules).
-//	You can provide the key via:
-//	- Authorization: Bearer <key>
-//	- X-Management-Key: <key>
-//
-// Request JSON:
-//   - auth_index / authIndex / AuthIndex (optional):
-//     The credential "auth_index" from GET /v0/management/auth-files (or other endpoints returning it).
-//     If omitted or not found, credential-specific proxy/token substitution is skipped.
-//   - method (required): HTTP method, e.g. GET, POST, PUT, PATCH, DELETE.
-//   - url (required): Absolute URL including scheme and host, e.g. "https://api.example.com/v1/ping".
-//   - header (optional): Request headers map.
-//     Supports magic variable "$TOKEN$" which is replaced using the selected credential:
-//     1) metadata.access_token
-//     2) attributes.api_key
-//     3) metadata.token / metadata.id_token / metadata.cookie
-//     Example: {"Authorization":"Bearer $TOKEN$"}.
-//     Note: if you need to override the HTTP Host header, set header["Host"].
-//   - data (optional): Raw request body as string (useful for POST/PUT/PATCH).
-//
-// Proxy selection (highest priority first):
-//  1. Selected credential proxy_url
-//  2. Global config proxy-url
-//  3. Direct connect (environment proxies are not used)
-//
-// Response JSON (returned with HTTP 200 when the APICall itself succeeds):
-//   - status_code: Upstream HTTP status code.
-//   - header: Upstream response headers.
-//   - body: Upstream response body as string.
-//
-// Example:
-//
-//	curl -sS -X POST "http://127.0.0.1:8317/v0/management/api-call" \
-//	  -H "Authorization: Bearer <MANAGEMENT_KEY>" \
-//	  -H "Content-Type: application/json" \
-//	  -d '{"auth_index":"<AUTH_INDEX>","method":"GET","url":"https://api.example.com/v1/ping","header":{"Authorization":"Bearer $TOKEN$"}}'
-//
-//	curl -sS -X POST "http://127.0.0.1:8317/v0/management/api-call" \
-//	  -H "Authorization: Bearer 831227" \
-//	  -H "Content-Type: application/json" \
-//	  -d '{"auth_index":"<AUTH_INDEX>","method":"POST","url":"https://api.example.com/v1/fetchAvailableModels","header":{"Authorization":"Bearer $TOKEN$","Content-Type":"application/json","User-Agent":"cliproxyapi"},"data":"{}"}'
 func (h *Handler) APICall(c *gin.Context) {
 	var body apiCallRequest
 	if errBindJSON := c.ShouldBindJSON(&body); errBindJSON != nil {

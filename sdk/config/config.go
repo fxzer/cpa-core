@@ -1,7 +1,6 @@
 // Package config provides the public SDK configuration API.
 //
 // It re-exports the server configuration types and helpers so external projects can
-// embed CLIProxyAPI without importing internal packages.
 package config
 
 import internalconfig "github.com/fxzer/cpa-core/v7/internal/config"
