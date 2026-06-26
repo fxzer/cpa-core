@@ -157,6 +157,11 @@ nohup MANAGEMENT_STATIC_PATH=~/cpa-core/static ~/cpa-core/cpa-core -config ~/cpa
 - SQLite 请求事件持久化（默认开启）
 - 管理页面自动更新机制（GitHub Release 检测 + 直链兜底）
 - 统一管理页面文件名为 `web.html`
+- 部署脚本通用化：移除个人路径依赖，自动复制 config.example.yaml
+- 后端部署脚本：新增 `deploy.sh`，支持 `--to`、`--frontend`、`--skip-build` 参数
+- 自动更新 URL 更新：从 router-for-me 迁移到 fxzer/cpa-web
+- 后端检查加固：新增 CI 覆盖格式化、vet、测试，提取路由注册辅助函数
+- Config 新增配置项支持
 
 ---
 
