@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/fxzer/cpa-core/v7/internal/interfaces"
 	"github.com/fxzer/cpa-core/v7/internal/logging"
 	"github.com/fxzer/cpa-core/v7/internal/thinking"
@@ -22,6 +21,7 @@ import (
 	coreexecutor "github.com/fxzer/cpa-core/v7/sdk/cliproxy/executor"
 	"github.com/fxzer/cpa-core/v7/sdk/config"
 	sdktranslator "github.com/fxzer/cpa-core/v7/sdk/translator"
+	"github.com/gin-gonic/gin"
 	"golang.org/x/net/context"
 )
 

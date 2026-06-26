@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	internalconfig "github.com/fxzer/cpa-core/v7/internal/config"
 	"github.com/fxzer/cpa-core/v7/internal/interfaces"
 	"github.com/fxzer/cpa-core/v7/sdk/api/handlers"
+	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"

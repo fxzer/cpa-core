@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	coreauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
+	"github.com/gin-gonic/gin"
 )
 
 type apiKeyUsageEntry struct {

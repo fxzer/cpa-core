@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	cliproxyauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
 	"github.com/fxzer/cpa-core/v7/sdk/cliproxy/usage"
+	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 )

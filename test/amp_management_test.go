@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/fxzer/cpa-core/v7/internal/api/handlers/management"
 	"github.com/fxzer/cpa-core/v7/internal/config"
+	"github.com/gin-gonic/gin"
 )
 
 func init() {

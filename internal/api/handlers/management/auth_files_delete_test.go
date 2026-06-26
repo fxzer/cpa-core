@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/fxzer/cpa-core/v7/internal/config"
 	coreauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
+	"github.com/gin-gonic/gin"
 )
 
 func TestDeleteAuthFile_UsesAuthPathFromManager(t *testing.T) {

@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/fxzer/cpa-core/v7/internal/interfaces"
+	"github.com/gin-gonic/gin"
 )
 
 type StreamForwardOptions struct {

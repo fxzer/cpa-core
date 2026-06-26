@@ -13,10 +13,10 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/fxzer/cpa-core/v7/internal/registry"
 	"github.com/fxzer/cpa-core/v7/internal/thinking"
 	"github.com/fxzer/cpa-core/v7/internal/util"
+	"github.com/google/uuid"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 )

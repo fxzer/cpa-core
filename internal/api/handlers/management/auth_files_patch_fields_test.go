@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/fxzer/cpa-core/v7/internal/config"
 	coreauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
+	"github.com/gin-gonic/gin"
 )
 
 func TestPatchAuthFileFields_MergeHeadersAndDeleteEmptyValues(t *testing.T) {

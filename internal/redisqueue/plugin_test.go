@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	internallogging "github.com/fxzer/cpa-core/v7/internal/logging"
 	coreusage "github.com/fxzer/cpa-core/v7/sdk/cliproxy/usage"
+	"github.com/gin-gonic/gin"
 )
 
 func TestUsageQueuePluginPayloadIncludesStableFieldsAndSuccess(t *testing.T) {

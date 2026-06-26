@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/klauspost/compress/zstd"
 	"github.com/fxzer/cpa-core/v7/internal/logging"
 	"github.com/fxzer/cpa-core/v7/internal/util"
+	"github.com/gin-gonic/gin"
+	"github.com/klauspost/compress/zstd"
 )
 
 const maxErrorOnlyCapturedRequestBodyBytes int64 = 1 << 20 // 1 MiB

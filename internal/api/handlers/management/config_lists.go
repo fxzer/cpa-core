@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"github.com/fxzer/cpa-core/v7/internal/config"
+	"github.com/gin-gonic/gin"
 )
 
 // Generic helpers for list[string]
@@ -151,6 +151,7 @@ func (h *Handler) PatchGeminiKey(c *gin.Context) {
 		Name           *string                       `json:"name"`
 		Prefix         *string                       `json:"prefix"`
 		BaseURL        *string                       `json:"base-url"`
+		Priority       *int                          `json:"priority"`
 		Headers        *map[string]string            `json:"headers"`
 		ExcludedModels *[]string                     `json:"excluded-models"`
 	}
@@ -210,6 +211,9 @@ func (h *Handler) PatchGeminiKey(c *gin.Context) {
 	}
 	if body.Value.ExcludedModels != nil {
 		entry.ExcludedModels = config.NormalizeExcludedModels(*body.Value.ExcludedModels)
+	}
+	if body.Value.Priority != nil {
+		entry.Priority = *body.Value.Priority
 	}
 	h.cfg.GeminiKey[targetIndex] = entry
 	h.cfg.SanitizeGeminiKeys()
@@ -310,6 +314,7 @@ func (h *Handler) PatchClaudeKey(c *gin.Context) {
 		Name           *string                       `json:"name"`
 		Prefix         *string                       `json:"prefix"`
 		BaseURL        *string                       `json:"base-url"`
+		Priority       *int                          `json:"priority"`
 		Models         *[]config.ClaudeModel         `json:"models"`
 		Headers        *map[string]string            `json:"headers"`
 		ExcludedModels *[]string                     `json:"excluded-models"`
@@ -371,6 +376,9 @@ func (h *Handler) PatchClaudeKey(c *gin.Context) {
 	}
 	if body.Value.ExcludedModels != nil {
 		entry.ExcludedModels = config.NormalizeExcludedModels(*body.Value.ExcludedModels)
+	}
+	if body.Value.Priority != nil {
+		entry.Priority = *body.Value.Priority
 	}
 	normalizeClaudeKey(&entry)
 	h.cfg.ClaudeKey[targetIndex] = entry
@@ -473,6 +481,7 @@ func (h *Handler) PatchOpenAICompat(c *gin.Context) {
 		BaseURL       *string                             `json:"base-url"`
 		APIKeyEntries *[]config.OpenAICompatibilityAPIKey `json:"api-key-entries"`
 		Models        *[]config.OpenAICompatibilityModel  `json:"models"`
+		Priority      *int                                `json:"priority"`
 		Headers       *map[string]string                  `json:"headers"`
 	}
 	var body struct {
@@ -533,6 +542,9 @@ func (h *Handler) PatchOpenAICompat(c *gin.Context) {
 	}
 	if body.Value.Headers != nil {
 		entry.Headers = config.NormalizeHeaders(*body.Value.Headers)
+	}
+	if body.Value.Priority != nil {
+		entry.Priority = *body.Value.Priority
 	}
 	normalizeOpenAICompatibilityEntry(&entry)
 	h.cfg.OpenAICompatibility[targetIndex] = entry
@@ -608,6 +620,7 @@ func (h *Handler) PatchVertexCompatKey(c *gin.Context) {
 		Name           *string                       `json:"name"`
 		Prefix         *string                       `json:"prefix"`
 		BaseURL        *string                       `json:"base-url"`
+		Priority       *int                          `json:"priority"`
 		Headers        *map[string]string            `json:"headers"`
 		Models         *[]config.VertexCompatModel   `json:"models"`
 		ExcludedModels *[]string                     `json:"excluded-models"`
@@ -678,6 +691,9 @@ func (h *Handler) PatchVertexCompatKey(c *gin.Context) {
 	}
 	if body.Value.ExcludedModels != nil {
 		entry.ExcludedModels = config.NormalizeExcludedModels(*body.Value.ExcludedModels)
+	}
+	if body.Value.Priority != nil {
+		entry.Priority = *body.Value.Priority
 	}
 	normalizeVertexCompatKey(&entry)
 	h.cfg.VertexCompatAPIKey[targetIndex] = entry
@@ -1003,6 +1019,7 @@ func (h *Handler) PatchCodexKey(c *gin.Context) {
 		Name           *string                       `json:"name"`
 		Prefix         *string                       `json:"prefix"`
 		BaseURL        *string                       `json:"base-url"`
+		Priority       *int                          `json:"priority"`
 		Models         *[]config.CodexModel          `json:"models"`
 		Headers        *map[string]string            `json:"headers"`
 		ExcludedModels *[]string                     `json:"excluded-models"`
@@ -1071,6 +1088,9 @@ func (h *Handler) PatchCodexKey(c *gin.Context) {
 	}
 	if body.Value.ExcludedModels != nil {
 		entry.ExcludedModels = config.NormalizeExcludedModels(*body.Value.ExcludedModels)
+	}
+	if body.Value.Priority != nil {
+		entry.Priority = *body.Value.Priority
 	}
 	normalizeCodexKey(&entry)
 	h.cfg.CodexKey[targetIndex] = entry

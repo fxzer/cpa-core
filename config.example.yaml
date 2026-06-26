@@ -145,6 +145,8 @@ quota-exceeded:
 # Routing strategy for selecting credentials when multiple match.
 routing:
   strategy: "round-robin" # round-robin (default), fill-first
+  # Per-credential/provider priority uses larger values first; priority 10 is preferred over priority 1.
+  # Unset priority defaults to 0.
   # Enable universal session-sticky routing for all clients.
   # Session IDs are extracted from: metadata.user_id (Claude Code session format),
   # X-Session-ID, Session_id (Codex), X-Amp-Thread-Id (Amp CLI),
@@ -277,6 +279,7 @@ nonstream-keepalive-interval: 0
 #   - name: "openrouter" # The name of the provider; it will be used in the user agent and other places.
 #     disabled: false # optional: set to true to disable this provider without removing it
 #     prefix: "test" # optional: require calls like "test/kimi-k2" to target this provider's credentials
+#     priority: 10 # optional: larger values are selected before smaller values; default is 0
 #     base-url: "https://openrouter.ai/api/v1" # The base URL of the provider.
 #     disable-cooling: false # optional: per-provider override for auth/model cooldown scheduling
 #     headers:

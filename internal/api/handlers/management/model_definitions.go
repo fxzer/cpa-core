@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"github.com/fxzer/cpa-core/v7/internal/registry"
+	"github.com/gin-gonic/gin"
 )
 
 // GetStaticModelDefinitions returns static model metadata for a given channel.

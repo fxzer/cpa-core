@@ -12,11 +12,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/fxzer/cpa-core/v7/internal/buildinfo"
 	"github.com/fxzer/cpa-core/v7/internal/config"
 	sdkAuth "github.com/fxzer/cpa-core/v7/sdk/auth"
 	coreauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
+	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/yaml.v3"
 )

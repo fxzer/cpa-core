@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	gin "github.com/gin-gonic/gin"
 	proxyconfig "github.com/fxzer/cpa-core/v7/internal/config"
 	internallogging "github.com/fxzer/cpa-core/v7/internal/logging"
 	"github.com/fxzer/cpa-core/v7/internal/redisqueue"
@@ -18,6 +17,7 @@ import (
 	sdkaccess "github.com/fxzer/cpa-core/v7/sdk/access"
 	"github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
 	sdkconfig "github.com/fxzer/cpa-core/v7/sdk/config"
+	gin "github.com/gin-gonic/gin"
 )
 
 func newTestServer(t *testing.T) *Server {

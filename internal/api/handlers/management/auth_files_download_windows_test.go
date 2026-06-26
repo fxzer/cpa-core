@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/fxzer/cpa-core/v7/internal/config"
+	"github.com/gin-gonic/gin"
 )
 
 func TestDownloadAuthFile_PreventsWindowsSlashTraversal(t *testing.T) {

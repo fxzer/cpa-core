@@ -13,8 +13,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"github.com/fxzer/cpa-core/v7/internal/misc"
+	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 )
 

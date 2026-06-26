@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/fxzer/cpa-core/v7/internal/requestevents"
+	"github.com/gin-gonic/gin"
 )
 
 const maxUsageImportBytes = 64 * 1024 * 1024

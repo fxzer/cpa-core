@@ -8,10 +8,10 @@ import (
 )
 
 type WriterConfig struct {
-	ChannelSize     int
-	BatchSize       int
-	FlushInterval   time.Duration
-	OnOverflowDrop  bool
+	ChannelSize    int
+	BatchSize      int
+	FlushInterval  time.Duration
+	OnOverflowDrop bool
 }
 
 type WriterStatus struct {

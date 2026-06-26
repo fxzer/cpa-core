@@ -9,7 +9,7 @@ type UsageConfig struct {
 	// DBPath is the SQLite database path. Empty uses <log-dir>/usage/usage.sqlite.
 	DBPath string `yaml:"db-path" json:"db-path"`
 	// RetentionDays controls automatic pruning. 0 disables pruning.
-	RetentionDays int `yaml:"retention-days" json:"retention-days"`
+	RetentionDays int               `yaml:"retention-days" json:"retention-days"`
 	Writer        UsageWriterConfig `yaml:"writer" json:"writer"`
 }
 

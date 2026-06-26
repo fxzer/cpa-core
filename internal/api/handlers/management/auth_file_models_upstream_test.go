@@ -66,12 +66,12 @@ func TestResolveUpstreamAuthFileModels_NoAliasConfig(t *testing.T) {
 
 func TestParseUpstreamQuery(t *testing.T) {
 	cases := map[string]bool{
-		"":        true,
-		"1":       true,
-		"true":    true,
-		"0":       false,
-		"false":   false,
-		"off":     false,
+		"":      true,
+		"1":     true,
+		"true":  true,
+		"0":     false,
+		"false": false,
+		"off":   false,
 	}
 	for input, want := range cases {
 		if got := parseUpstreamQuery(input); got != want {

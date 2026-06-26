@@ -8,10 +8,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/gin-gonic/gin"
 	"github.com/fxzer/cpa-core/v7/internal/api/modules"
 	"github.com/fxzer/cpa-core/v7/internal/config"
 	sdkaccess "github.com/fxzer/cpa-core/v7/sdk/access"
+	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 )
 

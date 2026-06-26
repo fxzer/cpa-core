@@ -7,10 +7,10 @@ import (
 	"sync"
 	"time"
 
-	tls "github.com/refraction-networking/utls"
 	"github.com/fxzer/cpa-core/v7/internal/config"
 	cliproxyauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
 	"github.com/fxzer/cpa-core/v7/sdk/proxyutil"
+	tls "github.com/refraction-networking/utls"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/proxy"

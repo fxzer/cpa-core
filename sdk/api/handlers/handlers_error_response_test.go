@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/fxzer/cpa-core/v7/internal/interfaces"
 	coreauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
 	sdkconfig "github.com/fxzer/cpa-core/v7/sdk/config"
+	"github.com/gin-gonic/gin"
 )
 
 func TestWriteErrorResponse_AddonHeadersDisabledByDefault(t *testing.T) {

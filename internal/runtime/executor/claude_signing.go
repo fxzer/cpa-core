@@ -5,9 +5,9 @@ import (
 	"regexp"
 	"strings"
 
-	xxHash64 "github.com/pierrec/xxHash/xxHash64"
 	"github.com/fxzer/cpa-core/v7/internal/config"
 	cliproxyauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
+	xxHash64 "github.com/pierrec/xxHash/xxHash64"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 )

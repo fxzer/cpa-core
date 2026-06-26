@@ -23,7 +23,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/fxzer/cpa-core/v7/sdk/api"
 	sdkAuth "github.com/fxzer/cpa-core/v7/sdk/auth"
 	"github.com/fxzer/cpa-core/v7/sdk/cliproxy"
@@ -32,6 +31,7 @@ import (
 	"github.com/fxzer/cpa-core/v7/sdk/config"
 	"github.com/fxzer/cpa-core/v7/sdk/logging"
 	sdktr "github.com/fxzer/cpa-core/v7/sdk/translator"
+	"github.com/gin-gonic/gin"
 )
 
 const (

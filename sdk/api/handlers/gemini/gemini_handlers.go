@@ -12,11 +12,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	. "github.com/fxzer/cpa-core/v7/internal/constant"
 	"github.com/fxzer/cpa-core/v7/internal/interfaces"
 	"github.com/fxzer/cpa-core/v7/internal/registry"
 	"github.com/fxzer/cpa-core/v7/sdk/api/handlers"
+	"github.com/gin-gonic/gin"
 )
 
 // GeminiAPIHandler contains the handlers for Gemini API endpoints.

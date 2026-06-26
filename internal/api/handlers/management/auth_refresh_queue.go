@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	coreauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
+	"github.com/gin-gonic/gin"
 )
 
 type authRefreshQueueItem struct { // NOLINT
@@ -25,8 +25,8 @@ type authRefreshQueueItem struct { // NOLINT
 
 type authRefreshQueueResponse struct {
 	Queue       []authRefreshQueueItem `json:"queue"`
-	Count       int                  `json:"count"`
-	GeneratedAt string                `json:"generated_at"`
+	Count       int                    `json:"count"`
+	GeneratedAt string                 `json:"generated_at"`
 }
 
 // GetAuthRefreshQueue returns the auth refresh queue status.
@@ -82,13 +82,13 @@ func buildRefreshQueueItem(auth *coreauth.Auth, now time.Time) *authRefreshQueue
 	}
 
 	item := &authRefreshQueueItem{
-		ID:           auth.ID,
-		AuthIndex:    auth.Index,
-		Name:         strings.TrimSpace(auth.FileName),
-		Provider:     strings.TrimSpace(auth.Provider),
-		Status:       string(auth.Status),
-		Unavailable:  auth.Unavailable,
-		Disabled:     auth.Disabled,
+		ID:            auth.ID,
+		AuthIndex:     auth.Index,
+		Name:          strings.TrimSpace(auth.FileName),
+		Provider:      strings.TrimSpace(auth.Provider),
+		Status:        string(auth.Status),
+		Unavailable:   auth.Unavailable,
+		Disabled:      auth.Disabled,
 		NextRefreshAt: "",
 	}
 

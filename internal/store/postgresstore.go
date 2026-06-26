@@ -13,9 +13,9 @@ import (
 	"sync"
 	"time"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/fxzer/cpa-core/v7/internal/misc"
 	cliproxyauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	log "github.com/sirupsen/logrus"
 )
 

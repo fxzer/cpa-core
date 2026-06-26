@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/fxzer/cpa-core/v7/internal/api/modules"
 	"github.com/fxzer/cpa-core/v7/internal/config"
 	sdkaccess "github.com/fxzer/cpa-core/v7/sdk/access"
 	"github.com/fxzer/cpa-core/v7/sdk/api/handlers"
+	"github.com/gin-gonic/gin"
 )
 
 func TestAmpModule_Name(t *testing.T) {

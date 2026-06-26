@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/fxzer/cpa-core/v7/internal/config"
 	"github.com/fxzer/cpa-core/v7/internal/runtime/geminicli"
 	coreauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
 	"github.com/fxzer/cpa-core/v7/sdk/proxyutil"
+	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"

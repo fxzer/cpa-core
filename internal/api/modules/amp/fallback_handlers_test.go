@@ -8,9 +8,9 @@ import (
 	"net/http/httputil"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/fxzer/cpa-core/v7/internal/config"
 	"github.com/fxzer/cpa-core/v7/internal/registry"
+	"github.com/gin-gonic/gin"
 )
 
 func TestFallbackHandler_ModelMapping_PreservesThinkingSuffixAndRewritesResponse(t *testing.T) {

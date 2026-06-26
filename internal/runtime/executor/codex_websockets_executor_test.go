@@ -10,13 +10,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 	"github.com/fxzer/cpa-core/v7/internal/config"
 	cliproxyauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
 	cliproxyexecutor "github.com/fxzer/cpa-core/v7/sdk/cliproxy/executor"
 	sdkconfig "github.com/fxzer/cpa-core/v7/sdk/config"
 	sdktranslator "github.com/fxzer/cpa-core/v7/sdk/translator"
+	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/tidwall/gjson"
 )
 

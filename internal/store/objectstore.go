@@ -15,10 +15,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/fxzer/cpa-core/v7/internal/misc"
 	cliproxyauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	log "github.com/sirupsen/logrus"
 )
 

@@ -14,15 +14,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/klauspost/compress/zstd"
-	xxHash64 "github.com/pierrec/xxHash/xxHash64"
 	"github.com/fxzer/cpa-core/v7/internal/config"
 	"github.com/fxzer/cpa-core/v7/internal/registry"
 	"github.com/fxzer/cpa-core/v7/internal/runtime/executor/helps"
 	cliproxyauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
 	cliproxyexecutor "github.com/fxzer/cpa-core/v7/sdk/cliproxy/executor"
 	sdktranslator "github.com/fxzer/cpa-core/v7/sdk/translator"
+	"github.com/gin-gonic/gin"
+	"github.com/klauspost/compress/zstd"
+	xxHash64 "github.com/pierrec/xxHash/xxHash64"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 )
@@ -1986,7 +1986,7 @@ func TestClaudeExecutor_ExperimentalCCHSigningOptInSignsFinalBody(t *testing.T) 
 
 	executor := NewClaudeExecutor(&config.Config{
 		ClaudeKey: []config.ClaudeKey{{
-			APIKeyEntries: []config.ProviderAPIKeyEntry{{APIKey: "key-123"}}, BaseURL:                server.URL,
+			APIKeyEntries: []config.ProviderAPIKeyEntry{{APIKey: "key-123"}}, BaseURL: server.URL,
 			ExperimentalCCHSigning: true,
 		}},
 	})

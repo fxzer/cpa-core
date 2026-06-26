@@ -7,10 +7,10 @@ package api
 import (
 	"context"
 
-	"github.com/gin-gonic/gin"
 	internalmanagement "github.com/fxzer/cpa-core/v7/internal/api/handlers/management"
 	coreauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
 	"github.com/fxzer/cpa-core/v7/sdk/config"
+	"github.com/gin-gonic/gin"
 )
 
 // Handler re-exports the management handler used by the internal HTTP API.

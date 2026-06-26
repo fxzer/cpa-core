@@ -6,10 +6,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	cliproxyexecutor "github.com/fxzer/cpa-core/v7/sdk/cliproxy/executor"
 	sdktranslator "github.com/fxzer/cpa-core/v7/sdk/translator"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/tidwall/gjson"
 )
 

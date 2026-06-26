@@ -27,10 +27,10 @@ func DefaultConfig() config.UsageConfig {
 		Enabled:       &enabled,
 		RetentionDays: 90,
 		Writer: config.UsageWriterConfig{
-			ChannelSize:    4096,
-			BatchSize:      100,
+			ChannelSize:     4096,
+			BatchSize:       100,
 			FlushIntervalMS: 500,
-			OnOverflowDrop: true,
+			OnOverflowDrop:  true,
 		},
 	}
 }

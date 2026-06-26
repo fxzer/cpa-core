@@ -415,7 +415,7 @@ type ClaudeKey struct {
 	ExperimentalCCHSigning bool `yaml:"experimental-cch-signing,omitempty" json:"experimental-cch-signing,omitempty"`
 }
 
-func (k ClaudeKey) GetAPIKey() string { return FirstProviderAPIKey(k.APIKeyEntries) }
+func (k ClaudeKey) GetAPIKey() string  { return FirstProviderAPIKey(k.APIKeyEntries) }
 func (k ClaudeKey) GetBaseURL() string { return k.BaseURL }
 func (k ClaudeKey) MatchesAPIKey(apiKey, baseURL string) bool {
 	return ProviderKeyGroupMatchesAPIKey(k.APIKeyEntries, k.BaseURL, apiKey, baseURL)
@@ -468,7 +468,7 @@ type CodexKey struct {
 	DisableCooling bool `yaml:"disable-cooling,omitempty" json:"disable-cooling,omitempty"`
 }
 
-func (k CodexKey) GetAPIKey() string { return FirstProviderAPIKey(k.APIKeyEntries) }
+func (k CodexKey) GetAPIKey() string  { return FirstProviderAPIKey(k.APIKeyEntries) }
 func (k CodexKey) GetBaseURL() string { return k.BaseURL }
 func (k CodexKey) MatchesAPIKey(apiKey, baseURL string) bool {
 	return ProviderKeyGroupMatchesAPIKey(k.APIKeyEntries, k.BaseURL, apiKey, baseURL)
@@ -517,7 +517,7 @@ type GeminiKey struct {
 	DisableCooling bool `yaml:"disable-cooling,omitempty" json:"disable-cooling,omitempty"`
 }
 
-func (k GeminiKey) GetAPIKey() string { return FirstProviderAPIKey(k.APIKeyEntries) }
+func (k GeminiKey) GetAPIKey() string  { return FirstProviderAPIKey(k.APIKeyEntries) }
 func (k GeminiKey) GetBaseURL() string { return k.BaseURL }
 func (k GeminiKey) MatchesAPIKey(apiKey, baseURL string) bool {
 	return ProviderKeyGroupMatchesAPIKey(k.APIKeyEntries, k.BaseURL, apiKey, baseURL)

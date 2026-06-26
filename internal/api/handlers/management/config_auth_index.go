@@ -25,17 +25,17 @@ type geminiKeyWithAuthIndex struct {
 }
 
 type claudeKeyWithAuthIndex struct {
-	Name                     string                             `json:"name,omitempty"`
-	Priority                 int                                `json:"priority,omitempty"`
-	Prefix                   string                             `json:"prefix,omitempty"`
-	BaseURL                  string                             `json:"base-url"`
-	Headers                  map[string]string                  `json:"headers,omitempty"`
-	Models                   []config.ClaudeModel               `json:"models,omitempty"`
-	ExcludedModels           []string                           `json:"excluded-models,omitempty"`
-	DisableCooling           bool                               `json:"disable-cooling,omitempty"`
-	Cloak                    *config.CloakConfig                `json:"cloak,omitempty"`
-	ExperimentalCCHSigning   bool                               `json:"experimental-cch-signing,omitempty"`
-	APIKeyEntries            []providerAPIKeyEntryWithAuthIndex `json:"api-key-entries"`
+	Name                   string                             `json:"name,omitempty"`
+	Priority               int                                `json:"priority,omitempty"`
+	Prefix                 string                             `json:"prefix,omitempty"`
+	BaseURL                string                             `json:"base-url"`
+	Headers                map[string]string                  `json:"headers,omitempty"`
+	Models                 []config.ClaudeModel               `json:"models,omitempty"`
+	ExcludedModels         []string                           `json:"excluded-models,omitempty"`
+	DisableCooling         bool                               `json:"disable-cooling,omitempty"`
+	Cloak                  *config.CloakConfig                `json:"cloak,omitempty"`
+	ExperimentalCCHSigning bool                               `json:"experimental-cch-signing,omitempty"`
+	APIKeyEntries          []providerAPIKeyEntryWithAuthIndex `json:"api-key-entries"`
 }
 
 type codexKeyWithAuthIndex struct {

@@ -15,8 +15,6 @@ import (
 	"time"
 
 	"github.com/andybalholm/brotli"
-	"github.com/google/uuid"
-	"github.com/klauspost/compress/zstd"
 	claudeauth "github.com/fxzer/cpa-core/v7/internal/auth/claude"
 	"github.com/fxzer/cpa-core/v7/internal/config"
 	"github.com/fxzer/cpa-core/v7/internal/misc"
@@ -27,6 +25,8 @@ import (
 	cliproxyauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
 	cliproxyexecutor "github.com/fxzer/cpa-core/v7/sdk/cliproxy/executor"
 	sdktranslator "github.com/fxzer/cpa-core/v7/sdk/translator"
+	"github.com/google/uuid"
+	"github.com/klauspost/compress/zstd"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"

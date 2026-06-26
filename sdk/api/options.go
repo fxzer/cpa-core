@@ -7,11 +7,11 @@ package api
 import (
 	"time"
 
-	"github.com/gin-gonic/gin"
 	internalapi "github.com/fxzer/cpa-core/v7/internal/api"
 	"github.com/fxzer/cpa-core/v7/sdk/api/handlers"
 	"github.com/fxzer/cpa-core/v7/sdk/config"
 	"github.com/fxzer/cpa-core/v7/sdk/logging"
+	"github.com/gin-gonic/gin"
 )
 
 // ServerOption customises HTTP server construction.

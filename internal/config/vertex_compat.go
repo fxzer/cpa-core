@@ -38,7 +38,7 @@ type VertexCompatKey struct {
 	ExcludedModels []string `yaml:"excluded-models,omitempty" json:"excluded-models,omitempty"`
 }
 
-func (k VertexCompatKey) GetAPIKey() string { return FirstProviderAPIKey(k.APIKeyEntries) }
+func (k VertexCompatKey) GetAPIKey() string  { return FirstProviderAPIKey(k.APIKeyEntries) }
 func (k VertexCompatKey) GetBaseURL() string { return k.BaseURL }
 func (k VertexCompatKey) MatchesAPIKey(apiKey, baseURL string) bool {
 	return ProviderKeyGroupMatchesAPIKey(k.APIKeyEntries, k.BaseURL, apiKey, baseURL)

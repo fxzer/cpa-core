@@ -21,7 +21,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/fxzer/cpa-core/v7/internal/auth/antigravity"
 	"github.com/fxzer/cpa-core/v7/internal/auth/claude"
 	"github.com/fxzer/cpa-core/v7/internal/auth/codex"
@@ -34,6 +33,7 @@ import (
 	"github.com/fxzer/cpa-core/v7/internal/util"
 	sdkAuth "github.com/fxzer/cpa-core/v7/sdk/auth"
 	coreauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
+	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"golang.org/x/oauth2"

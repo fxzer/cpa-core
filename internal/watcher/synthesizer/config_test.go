@@ -93,8 +93,8 @@ func TestConfigSynthesizer_GeminiKeys(t *testing.T) {
 			geminiKeys: []config.GeminiKey{
 				{
 					APIKeyEntries: []config.ProviderAPIKeyEntry{{APIKey: "api-key", ProxyURL: "http://proxy.local:8080"}},
-					BaseURL:  "https://custom.api.com",
-					Prefix:   "custom",
+					BaseURL:       "https://custom.api.com",
+					Prefix:        "custom",
 				},
 			},
 			wantLen: 1,
@@ -112,7 +112,7 @@ func TestConfigSynthesizer_GeminiKeys(t *testing.T) {
 			geminiKeys: []config.GeminiKey{
 				{
 					APIKeyEntries: []config.ProviderAPIKeyEntry{{APIKey: "api-key"}},
-					Headers: map[string]string{"X-Custom": "value"},
+					Headers:       map[string]string{"X-Custom": "value"},
 				},
 			},
 			wantLen: 1,
@@ -174,7 +174,7 @@ func TestConfigSynthesizer_ClaudeKeys(t *testing.T) {
 		Config: &config.Config{
 			ClaudeKey: []config.ClaudeKey{
 				{
-					APIKeyEntries: []config.ProviderAPIKeyEntry{{APIKey: "sk-ant-api-xxx"}}, Prefix:         "main",
+					APIKeyEntries: []config.ProviderAPIKeyEntry{{APIKey: "sk-ant-api-xxx"}}, Prefix: "main",
 					BaseURL:        "https://api.anthropic.com",
 					DisableCooling: true,
 					Models: []config.ClaudeModel{
@@ -441,7 +441,7 @@ func TestConfigSynthesizer_VertexCompat(t *testing.T) {
 			VertexCompatAPIKey: []config.VertexCompatKey{
 				{
 					APIKeyEntries: []config.ProviderAPIKeyEntry{{APIKey: "vertex-key-123"}}, BaseURL: "https://vertex.googleapis.com",
-					Prefix:  "vertex-prod",
+					Prefix: "vertex-prod",
 				},
 			},
 		},
