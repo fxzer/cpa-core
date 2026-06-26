@@ -15,7 +15,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/google/uuid"
 	internalconfig "github.com/fxzer/cpa-core/v7/internal/config"
 	"github.com/fxzer/cpa-core/v7/internal/home"
 	"github.com/fxzer/cpa-core/v7/internal/logging"
@@ -24,6 +23,7 @@ import (
 	"github.com/fxzer/cpa-core/v7/internal/util"
 	cliproxyexecutor "github.com/fxzer/cpa-core/v7/sdk/cliproxy/executor"
 	coreusage "github.com/fxzer/cpa-core/v7/sdk/cliproxy/usage"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -612,11 +612,15 @@ func executionResultModel(routeModel, upstreamModel string, pooled bool) string 
 	return strings.TrimSpace(upstreamModel)
 }
 
-func (m *Manager) filterExecutionModels(auth *Auth, routeModel string, candidates []string, pooled bool) []string {
+type executionModelPlan struct {
+	models []string
+	pooled bool
+}
+
+func (m *Manager) filterExecutionModelsAt(auth *Auth, routeModel string, candidates []string, pooled bool, now time.Time) []string {
 	if len(candidates) == 0 {
 		return nil
 	}
-	now := time.Now()
 	out := make([]string, 0, len(candidates))
 	for _, upstreamModel := range candidates {
 		stateModel := m.stateModelForExecution(auth, routeModel, upstreamModel, pooled)
@@ -629,10 +633,22 @@ func (m *Manager) filterExecutionModels(auth *Auth, routeModel string, candidate
 	return out
 }
 
-func (m *Manager) preparedExecutionModels(auth *Auth, routeModel string) ([]string, bool) {
+func (m *Manager) filterExecutionModels(auth *Auth, routeModel string, candidates []string, pooled bool) []string {
+	return m.filterExecutionModelsAt(auth, routeModel, candidates, pooled, time.Now())
+}
+
+func (m *Manager) planExecutionModelsAt(auth *Auth, routeModel string, now time.Time) executionModelPlan {
 	candidates := m.executionModelCandidates(auth, routeModel)
 	pooled := len(candidates) > 1
-	return m.filterExecutionModels(auth, routeModel, candidates, pooled), pooled
+	return executionModelPlan{
+		models: m.filterExecutionModelsAt(auth, routeModel, candidates, pooled, now),
+		pooled: pooled,
+	}
+}
+
+func (m *Manager) preparedExecutionModels(auth *Auth, routeModel string) ([]string, bool) {
+	plan := m.planExecutionModelsAt(auth, routeModel, time.Now())
+	return plan.models, plan.pooled
 }
 
 func (m *Manager) prepareExecutionModels(auth *Auth, routeModel string) []string {

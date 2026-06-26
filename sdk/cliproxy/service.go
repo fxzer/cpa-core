@@ -416,33 +416,43 @@ func (s *Service) ensureExecutorsForAuthWithMode(a *coreauth.Auth, forceReplace 
 		s.coreManager.RegisterExecutor(executor.NewOpenAICompatExecutor(compatProviderKey, s.cfg))
 		return
 	}
-	switch strings.ToLower(a.Provider) {
-	case "gemini":
-		s.coreManager.RegisterExecutor(executor.NewGeminiExecutor(s.cfg))
-	case "vertex":
-		s.coreManager.RegisterExecutor(executor.NewGeminiVertexExecutor(s.cfg))
-	case "gemini-cli":
-		s.coreManager.RegisterExecutor(executor.NewGeminiCLIExecutor(s.cfg))
-	case "aistudio":
-		if s.wsGateway != nil {
-			s.coreManager.RegisterExecutor(executor.NewAIStudioExecutor(s.cfg, a.ID, s.wsGateway))
-		}
+	if exec := s.executorForProvider(a); exec != nil {
+		s.coreManager.RegisterExecutor(exec)
 		return
-	case "antigravity":
-		s.coreManager.RegisterExecutor(executor.NewAntigravityExecutor(s.cfg))
-	case "claude":
-		s.coreManager.RegisterExecutor(executor.NewClaudeExecutor(s.cfg))
-	case "kimi":
-		s.coreManager.RegisterExecutor(executor.NewKimiExecutor(s.cfg))
-	case "xai":
-		s.coreManager.RegisterExecutor(executor.NewXAIExecutor(s.cfg))
-	default:
+	}
+	if !strings.EqualFold(strings.TrimSpace(a.Provider), "aistudio") {
 		providerKey := strings.ToLower(strings.TrimSpace(a.Provider))
 		if providerKey == "" {
 			providerKey = "openai-compatibility"
 		}
 		s.coreManager.RegisterExecutor(executor.NewOpenAICompatExecutor(providerKey, s.cfg))
 	}
+}
+
+func (s *Service) executorForProvider(a *coreauth.Auth) coreauth.ProviderExecutor {
+	if s == nil || a == nil {
+		return nil
+	}
+	provider := strings.ToLower(strings.TrimSpace(a.Provider))
+	factories := map[string]func() coreauth.ProviderExecutor{
+		"gemini":      func() coreauth.ProviderExecutor { return executor.NewGeminiExecutor(s.cfg) },
+		"vertex":      func() coreauth.ProviderExecutor { return executor.NewGeminiVertexExecutor(s.cfg) },
+		"gemini-cli":  func() coreauth.ProviderExecutor { return executor.NewGeminiCLIExecutor(s.cfg) },
+		"antigravity": func() coreauth.ProviderExecutor { return executor.NewAntigravityExecutor(s.cfg) },
+		"claude":      func() coreauth.ProviderExecutor { return executor.NewClaudeExecutor(s.cfg) },
+		"kimi":        func() coreauth.ProviderExecutor { return executor.NewKimiExecutor(s.cfg) },
+		"xai":         func() coreauth.ProviderExecutor { return executor.NewXAIExecutor(s.cfg) },
+		"aistudio": func() coreauth.ProviderExecutor {
+			if s.wsGateway == nil {
+				return nil
+			}
+			return executor.NewAIStudioExecutor(s.cfg, a.ID, s.wsGateway)
+		},
+	}
+	if factory, ok := factories[provider]; ok {
+		return factory()
+	}
+	return nil
 }
 
 func (s *Service) registerResolvedModelsForAuth(a *coreauth.Auth, providerKey string, models []*ModelInfo) {

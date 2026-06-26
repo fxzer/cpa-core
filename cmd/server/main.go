@@ -18,7 +18,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/joho/godotenv"
 	configaccess "github.com/fxzer/cpa-core/v7/internal/access/config_access"
 	"github.com/fxzer/cpa-core/v7/internal/buildinfo"
 	"github.com/fxzer/cpa-core/v7/internal/cmd"
@@ -35,6 +34,7 @@ import (
 	"github.com/fxzer/cpa-core/v7/internal/util"
 	sdkAuth "github.com/fxzer/cpa-core/v7/sdk/auth"
 	coreauth "github.com/fxzer/cpa-core/v7/sdk/cliproxy/auth"
+	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -165,6 +165,19 @@ func parseHomeBoolQuery(values url.Values, keys ...string) bool {
 		return errParse == nil && parsed
 	}
 	return false
+}
+
+func registerSharedTokenStore(usePostgres bool, pgStoreInst *store.PostgresStore, useObject bool, objectStoreInst *store.ObjectTokenStore, useGit bool, gitStoreInst *store.GitTokenStore) {
+	switch {
+	case usePostgres:
+		sdkAuth.RegisterTokenStore(pgStoreInst)
+	case useObject:
+		sdkAuth.RegisterTokenStore(objectStoreInst)
+	case useGit:
+		sdkAuth.RegisterTokenStore(gitStoreInst)
+	default:
+		sdkAuth.RegisterTokenStore(sdkAuth.NewFileTokenStore())
+	}
 }
 
 // main is the entry point of the application.
@@ -623,15 +636,7 @@ func main() {
 	}
 
 	// Register the shared token store once so all components use the same persistence backend.
-	if usePostgresStore {
-		sdkAuth.RegisterTokenStore(pgStoreInst)
-	} else if useObjectStore {
-		sdkAuth.RegisterTokenStore(objectStoreInst)
-	} else if useGitStore {
-		sdkAuth.RegisterTokenStore(gitStoreInst)
-	} else {
-		sdkAuth.RegisterTokenStore(sdkAuth.NewFileTokenStore())
-	}
+	registerSharedTokenStore(usePostgresStore, pgStoreInst, useObjectStore, objectStoreInst, useGitStore, gitStoreInst)
 
 	// Register built-in access providers before constructing services.
 	configaccess.Register(&cfg.SDKConfig)
