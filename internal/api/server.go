@@ -48,6 +48,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+var corsExposedResponseHeaders = []string{
+	"Content-Length",
+	"X-SERVER-BUILD-DATE",
+}
+
+var corsExposedResponseHeadersJoined = strings.Join(corsExposedResponseHeaders, ", ")
+
 const oauthCallbackSuccessHTML = `<html><head><meta charset="utf-8"><title>Authentication successful</title><script>setTimeout(function(){window.close();},5000);</script></head><body><h1>Authentication successful!</h1><p>You can close this window.</p><p>This window will close automatically in 5 seconds.</p></body></html>`
 
 type serverOptionConfig struct {
@@ -1316,6 +1323,7 @@ func corsMiddleware() gin.HandlerFunc {
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "*")
+		c.Header("Access-Control-Expose-Headers", corsExposedResponseHeadersJoined)
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(http.StatusNoContent)
