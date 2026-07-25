@@ -135,6 +135,10 @@ func (w *Writer) run(ctx context.Context) {
 			w.inserted.Add(int64(result.Inserted))
 			w.skipped.Add(int64(result.Skipped))
 		}
+		// Trim oldest events if total body storage exceeds limit
+		if trimErr := w.store.TrimOldEventsByBodySize(ctx); trimErr != nil {
+			// non-fatal: log but don't fail the flush
+		}
 		batch = batch[:0]
 		w.lastFlushAt.Store(time.Now().UnixMilli())
 	}

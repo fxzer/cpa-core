@@ -33,6 +33,25 @@ func (h *Handler) GetRequestEvents(c *gin.Context) {
 	c.JSON(http.StatusOK, requestevents.BuildListResponse(events))
 }
 
+func (h *Handler) GetRequestEvent(c *gin.Context) {
+	store := requestEventsStore()
+	if store == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "request event persistence is unavailable"})
+		return
+	}
+	id := strings.TrimSpace(c.Param("id"))
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing event id"})
+		return
+	}
+	event, err := store.GetEventByHash(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, requestevents.ToRequestEventItem(event))
+}
+
 func (h *Handler) GetRequestEventsStatus(c *gin.Context) {
 	service := requestevents.Global()
 	if service == nil || service.Store() == nil {

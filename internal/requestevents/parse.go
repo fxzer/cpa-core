@@ -40,8 +40,12 @@ type Event struct {
 	TotalTokens          int64  `json:"total_tokens"`
 	LatencyMS            *int64 `json:"latency_ms,omitempty"`
 	Failed               bool   `json:"failed"`
+	FailBody             string `json:"fail_body,omitempty"`
+	FailStatusCode       int    `json:"fail_status_code,omitempty"`
 	RawJSON              string `json:"raw_json,omitempty"`
 	CreatedAtMS          int64  `json:"created_at_ms"`
+	RequestBody          string `json:"request_body,omitempty"`
+	ResponseBody         string `json:"response_body,omitempty"`
 }
 
 type Tokens struct {
@@ -136,6 +140,13 @@ func NormalizeRaw(raw []byte) (Event, error) {
 	apiKey := readString(record, "api_key", "apiKey", "key")
 	authIndex := readString(record, "auth_index", "authIndex", "AuthIndex")
 
+	var failBody string
+	var failStatusCode int
+	if failObj, ok := first(record, "fail").(map[string]any); ok {
+		failBody = readString(failObj, "body")
+		failStatusCode = int(readInt(failObj, "status_code", "statusCode"))
+	}
+
 	event := Event{
 		RequestID:            readString(record, "request_id", "requestId", "id"),
 		TimestampMS:          timestampMS,
@@ -164,8 +175,12 @@ func NormalizeRaw(raw []byte) (Event, error) {
 		TotalTokens:          totalTokens,
 		LatencyMS:            latencyMS,
 		Failed:               failed,
+		FailBody:             failBody,
+		FailStatusCode:       failStatusCode,
 		RawJSON:              string(redactedJSON),
 		CreatedAtMS:          time.Now().UnixMilli(),
+		RequestBody:          readString(record, "request_body", "requestBody"),
+		ResponseBody:         readString(record, "response_body", "responseBody"),
 	}
 	if event.Model == "" {
 		event.Model = "-"
@@ -398,6 +413,8 @@ func buildEventHash(event Event) string {
 		strconv.FormatInt(event.ReasoningTokens, 10),
 		strconv.FormatInt(maxInt64(event.CachedTokens, event.CacheTokens), 10),
 		strconv.FormatBool(event.Failed),
+		strconv.Itoa(event.FailStatusCode),
+		event.FailBody,
 	}
 	if event.LatencyMS != nil {
 		parts = append(parts, strconv.FormatInt(*event.LatencyMS, 10))

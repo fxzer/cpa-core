@@ -22,7 +22,11 @@ type RequestEventItem struct {
 	AuthSnapshotAtMS     int64  `json:"auth_snapshot_at_ms,omitempty"`
 	LatencyMS            *int64 `json:"latency_ms,omitempty"`
 	Failed               bool   `json:"failed"`
+	FailBody             string `json:"fail_body,omitempty"`
+	FailStatusCode       int    `json:"fail_status_code,omitempty"`
 	Tokens               Tokens `json:"tokens"`
+	RequestBody          string `json:"request_body,omitempty"`
+	ResponseBody         string `json:"response_body,omitempty"`
 }
 
 type EventSummary struct {
@@ -64,6 +68,10 @@ func ToRequestEventItem(event Event) RequestEventItem {
 		AuthSnapshotAtMS:     event.AuthSnapshotAtMS,
 		LatencyMS:            event.LatencyMS,
 		Failed:               event.Failed,
+		FailBody:             event.FailBody,
+		FailStatusCode:       event.FailStatusCode,
+		RequestBody:          event.RequestBody,
+		ResponseBody:         event.ResponseBody,
 		Tokens: Tokens{
 			InputTokens:     event.InputTokens,
 			OutputTokens:    event.OutputTokens,

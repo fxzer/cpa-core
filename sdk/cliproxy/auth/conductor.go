@@ -1349,25 +1349,37 @@ func (m *Manager) executeMixedOnce(ctx context.Context, providers []string, req 
 	homeMode := m.HomeEnabled()
 	homeAuthCount := 1
 	tried := make(map[string]struct{})
-	attempted := make(map[string]struct{})
+	skippedProviders := make(map[string]struct{})
+	providerFailStreak := make(map[string]int)
+	// attemptsPerPriority 把"最多尝试 N 个凭证"的预算按优先级分桶。
+	// 高优先级桶试够 N 个仍全失败时，调度器自动降级到低优先级桶，
+	// 低优先级桶重新获得 N 次预算，避免用全局计数提前耗尽导致 Agent 工作流中断。
+	attemptsPerPriority := make(map[int]int)
 	var lastErr error
 	for {
-		if !homeMode && maxRetryCredentials > 0 && len(attempted) >= maxRetryCredentials {
+		pickOpts := opts
+		if homeMode {
+			pickOpts = withHomeAuthCount(opts, homeAuthCount)
+		}
+		eligibleProviders := providersExcludingSkipped(providers, skippedProviders)
+		if len(eligibleProviders) == 0 {
 			if lastErr != nil {
 				return cliproxyexecutor.Response{}, lastErr
 			}
 			return cliproxyexecutor.Response{}, &Error{Code: "auth_not_found", Message: "no auth available"}
 		}
-		pickOpts := opts
-		if homeMode {
-			pickOpts = withHomeAuthCount(opts, homeAuthCount)
-		}
-		auth, executor, provider, errPick := m.pickNextMixed(ctx, providers, routeModel, pickOpts, tried)
+		auth, executor, provider, errPick := m.pickNextMixed(ctx, eligibleProviders, routeModel, pickOpts, tried)
 		if errPick != nil {
 			if shouldReturnLastErrorOnPickFailure(homeMode, lastErr, errPick) {
 				return cliproxyexecutor.Response{}, lastErr
 			}
 			return cliproxyexecutor.Response{}, errPick
+		}
+		// 桶预算检查：若当前 auth 所在优先级桶已试够 maxRetryCredentials 个，
+		// 把它塞进 tried 让 pickNextMixed 跳过，下一轮自然降级到更低优先级。
+		if !homeMode && maxRetryCredentials > 0 && attemptsPerPriority[authPriority(auth)] >= maxRetryCredentials {
+			tried[auth.ID] = struct{}{}
+			continue
 		}
 
 		entry := logEntryWithRequestID(ctx)
@@ -1386,7 +1398,7 @@ func (m *Manager) executeMixedOnce(ctx context.Context, providers []string, req 
 		if len(models) == 0 {
 			continue
 		}
-		attempted[auth.ID] = struct{}{}
+		attemptsPerPriority[authPriority(auth)]++
 		var authErr error
 		for _, upstreamModel := range models {
 			resultModel := m.stateModelForExecution(auth, routeModel, upstreamModel, pooled)
@@ -1419,6 +1431,7 @@ func (m *Manager) executeMixedOnce(ctx context.Context, providers []string, req 
 			if isRequestInvalidError(authErr) {
 				return cliproxyexecutor.Response{}, authErr
 			}
+			noteProviderSkipForRequest(skippedProviders, providerFailStreak, provider, authErr)
 			lastErr = authErr
 			if homeMode {
 				homeAuthCount++
@@ -1437,25 +1450,37 @@ func (m *Manager) executeCountMixedOnce(ctx context.Context, providers []string,
 	homeMode := m.HomeEnabled()
 	homeAuthCount := 1
 	tried := make(map[string]struct{})
-	attempted := make(map[string]struct{})
+	skippedProviders := make(map[string]struct{})
+	providerFailStreak := make(map[string]int)
+	// attemptsPerPriority 把"最多尝试 N 个凭证"的预算按优先级分桶。
+	// 高优先级桶试够 N 个仍全失败时，调度器自动降级到低优先级桶，
+	// 低优先级桶重新获得 N 次预算，避免用全局计数提前耗尽导致 Agent 工作流中断。
+	attemptsPerPriority := make(map[int]int)
 	var lastErr error
 	for {
-		if !homeMode && maxRetryCredentials > 0 && len(attempted) >= maxRetryCredentials {
+		pickOpts := opts
+		if homeMode {
+			pickOpts = withHomeAuthCount(opts, homeAuthCount)
+		}
+		eligibleProviders := providersExcludingSkipped(providers, skippedProviders)
+		if len(eligibleProviders) == 0 {
 			if lastErr != nil {
 				return cliproxyexecutor.Response{}, lastErr
 			}
 			return cliproxyexecutor.Response{}, &Error{Code: "auth_not_found", Message: "no auth available"}
 		}
-		pickOpts := opts
-		if homeMode {
-			pickOpts = withHomeAuthCount(opts, homeAuthCount)
-		}
-		auth, executor, provider, errPick := m.pickNextMixed(ctx, providers, routeModel, pickOpts, tried)
+		auth, executor, provider, errPick := m.pickNextMixed(ctx, eligibleProviders, routeModel, pickOpts, tried)
 		if errPick != nil {
 			if shouldReturnLastErrorOnPickFailure(homeMode, lastErr, errPick) {
 				return cliproxyexecutor.Response{}, lastErr
 			}
 			return cliproxyexecutor.Response{}, errPick
+		}
+		// 桶预算检查：若当前 auth 所在优先级桶已试够 maxRetryCredentials 个，
+		// 把它塞进 tried 让 pickNextMixed 跳过，下一轮自然降级到更低优先级。
+		if !homeMode && maxRetryCredentials > 0 && attemptsPerPriority[authPriority(auth)] >= maxRetryCredentials {
+			tried[auth.ID] = struct{}{}
+			continue
 		}
 
 		entry := logEntryWithRequestID(ctx)
@@ -1474,7 +1499,7 @@ func (m *Manager) executeCountMixedOnce(ctx context.Context, providers []string,
 		if len(models) == 0 {
 			continue
 		}
-		attempted[auth.ID] = struct{}{}
+		attemptsPerPriority[authPriority(auth)]++
 		var authErr error
 		for _, upstreamModel := range models {
 			resultModel := m.stateModelForExecution(auth, routeModel, upstreamModel, pooled)
@@ -1507,6 +1532,7 @@ func (m *Manager) executeCountMixedOnce(ctx context.Context, providers []string,
 			if isRequestInvalidError(authErr) {
 				return cliproxyexecutor.Response{}, authErr
 			}
+			noteProviderSkipForRequest(skippedProviders, providerFailStreak, provider, authErr)
 			lastErr = authErr
 			if homeMode {
 				homeAuthCount++
@@ -1525,25 +1551,37 @@ func (m *Manager) executeStreamMixedOnce(ctx context.Context, providers []string
 	homeMode := m.HomeEnabled()
 	homeAuthCount := 1
 	tried := make(map[string]struct{})
-	attempted := make(map[string]struct{})
+	skippedProviders := make(map[string]struct{})
+	providerFailStreak := make(map[string]int)
+	// attemptsPerPriority 把"最多尝试 N 个凭证"的预算按优先级分桶。
+	// 高优先级桶试够 N 个仍全失败时，调度器自动降级到低优先级桶，
+	// 低优先级桶重新获得 N 次预算，避免用全局计数提前耗尽导致 Agent 工作流中断。
+	attemptsPerPriority := make(map[int]int)
 	var lastErr error
 	for {
-		if !homeMode && maxRetryCredentials > 0 && len(attempted) >= maxRetryCredentials {
+		pickOpts := opts
+		if homeMode {
+			pickOpts = withHomeAuthCount(opts, homeAuthCount)
+		}
+		eligibleProviders := providersExcludingSkipped(providers, skippedProviders)
+		if len(eligibleProviders) == 0 {
 			if lastErr != nil {
 				return nil, lastErr
 			}
 			return nil, &Error{Code: "auth_not_found", Message: "no auth available"}
 		}
-		pickOpts := opts
-		if homeMode {
-			pickOpts = withHomeAuthCount(opts, homeAuthCount)
-		}
-		auth, executor, provider, errPick := m.pickNextMixed(ctx, providers, routeModel, pickOpts, tried)
+		auth, executor, provider, errPick := m.pickNextMixed(ctx, eligibleProviders, routeModel, pickOpts, tried)
 		if errPick != nil {
 			if shouldReturnLastErrorOnPickFailure(homeMode, lastErr, errPick) {
 				return nil, lastErr
 			}
 			return nil, errPick
+		}
+		// 桶预算检查：若当前 auth 所在优先级桶已试够 maxRetryCredentials 个，
+		// 把它塞进 tried 让 pickNextMixed 跳过，下一轮自然降级到更低优先级。
+		if !homeMode && maxRetryCredentials > 0 && attemptsPerPriority[authPriority(auth)] >= maxRetryCredentials {
+			tried[auth.ID] = struct{}{}
+			continue
 		}
 
 		entry := logEntryWithRequestID(ctx)
@@ -1560,7 +1598,7 @@ func (m *Manager) executeStreamMixedOnce(ctx context.Context, providers []string
 		if len(models) == 0 {
 			continue
 		}
-		attempted[auth.ID] = struct{}{}
+		attemptsPerPriority[authPriority(auth)]++
 		streamResult, errStream := m.executeStreamWithModelPool(execCtx, executor, auth, provider, req, opts, routeModel, models, pooled)
 		if errStream != nil {
 			if errCtx := execCtx.Err(); errCtx != nil {
@@ -1569,6 +1607,7 @@ func (m *Manager) executeStreamMixedOnce(ctx context.Context, providers []string
 			if isRequestInvalidError(errStream) {
 				return nil, errStream
 			}
+			noteProviderSkipForRequest(skippedProviders, providerFailStreak, provider, errStream)
 			lastErr = errStream
 			if homeMode {
 				homeAuthCount++
@@ -2176,7 +2215,9 @@ func (m *Manager) MarkResult(ctx context.Context, result Result) {
 			}
 		} else {
 			if result.Model != "" {
-				if !isRequestScopedNotFoundResultError(result.Error) {
+				// 客户端请求形态错误（非法参数等）与具体 auth/provider 无关，
+				// 不应触发模型冷却，否则会把健康节点误判为故障。
+				if !isRequestScopedNotFoundResultError(result.Error) && !isRequestInvalidResultError(result.Error) {
 					disableCooling := quotaCooldownDisabledForAuth(auth)
 					state := ensureModelState(auth, result.Model)
 					state.Unavailable = true
@@ -2194,6 +2235,11 @@ func (m *Manager) MarkResult(ctx context.Context, result Result) {
 						next := now.Add(12 * time.Hour)
 						state.NextRetryAfter = next
 						suspendReason = "model_not_supported"
+						shouldSuspendModel = true
+					} else if !disableCooling && isAccountPermanentFailureResultError(result.Error) {
+						next := now.Add(accountPermanentCooldown)
+						state.NextRetryAfter = next
+						suspendReason = "account_unavailable"
 						shouldSuspendModel = true
 					} else {
 						switch statusCode {
@@ -2266,7 +2312,7 @@ func (m *Manager) MarkResult(ctx context.Context, result Result) {
 					auth.UpdatedAt = now
 					updateAggregatedAvailability(auth, now)
 				}
-			} else {
+			} else if !isRequestInvalidResultError(result.Error) {
 				applyAuthFailureState(auth, result.Error, result.RetryAfter, now)
 			}
 		}
@@ -2631,7 +2677,13 @@ func isRequestInvalidError(err error) bool {
 		return strings.Contains(msg, "INVALID_REQUEST") ||
 			strings.Contains(msg, "INVALID_ARGUMENT") ||
 			strings.Contains(msg, "FAILED_PRECONDITION") ||
-			strings.Contains(msg, "CONTEXT_LENGTH_EXCEEDED")
+			strings.Contains(msg, "CONTEXT_LENGTH_EXCEEDED") ||
+			// OpenAI-compat 通用：参数值非法（如 reasoning_effort=xhigh）。
+			// 不用裸匹配 "NOT SUPPORTED"，避免把"某 provider 能力不支持、换一家可能成功"
+			// 的错误误判为客户端错误而中断 failover。
+			strings.Contains(msg, "INVALIDPARAMETER") ||
+			strings.Contains(msg, "INVALID REASONING_EFFORT") ||
+			(strings.Contains(msg, "NOT SUPPORTED") && strings.Contains(msg, "VALID LEVELS"))
 	case http.StatusNotFound:
 		return isRequestScopedNotFoundMessage(err.Error())
 	case http.StatusUnprocessableEntity:
@@ -2643,6 +2695,102 @@ func isRequestInvalidError(err error) bool {
 	default:
 		return false
 	}
+}
+
+func isRequestInvalidResultError(err *Error) bool {
+	if err == nil {
+		return false
+	}
+	return isRequestInvalidError(err)
+}
+
+// isAccountPermanentFailureMessage identifies account/billing/subscription failures
+// that will not recover by switching models on the same credential. These should
+// long-cooldown the auth and let the request failover to another provider.
+func isAccountPermanentFailureMessage(message string) bool {
+	lower := strings.ToLower(strings.TrimSpace(message))
+	if lower == "" {
+		return false
+	}
+	patterns := [...]string{
+		"no active step plan",
+		"insufficient balance",
+		"denied access",
+		"permission_denied",
+		"card_verification_required",
+		"subscribe to the hobby or pro plan",
+	}
+	for _, pattern := range patterns {
+		if strings.Contains(lower, pattern) {
+			return true
+		}
+	}
+	return false
+}
+
+func isAccountPermanentFailureError(err error) bool {
+	if err == nil {
+		return false
+	}
+	return isAccountPermanentFailureMessage(err.Error())
+}
+
+func isAccountPermanentFailureResultError(err *Error) bool {
+	if err == nil {
+		return false
+	}
+	if err.Message != "" && isAccountPermanentFailureMessage(err.Message) {
+		return true
+	}
+	return isAccountPermanentFailureMessage(err.Error())
+}
+
+const accountPermanentCooldown = 12 * time.Hour
+
+// noteProviderSkipForRequest updates per-request provider skip state.
+// 402 / account-permanent failures skip the provider immediately; 401/429 need
+// two hits so a single bad key does not discard a healthy sibling key too early.
+func noteProviderSkipForRequest(skipped map[string]struct{}, streak map[string]int, provider string, err error) {
+	if skipped == nil || streak == nil || err == nil {
+		return
+	}
+	providerKey := strings.ToLower(strings.TrimSpace(provider))
+	if providerKey == "" {
+		return
+	}
+	status := statusCodeFromError(err)
+	permanent := isAccountPermanentFailureError(err)
+	threshold := 0
+	switch {
+	case permanent || status == http.StatusPaymentRequired:
+		threshold = 1
+	case status == http.StatusUnauthorized || status == http.StatusTooManyRequests:
+		threshold = 2
+	default:
+		return
+	}
+	streak[providerKey]++
+	if streak[providerKey] >= threshold {
+		skipped[providerKey] = struct{}{}
+	}
+}
+
+func providersExcludingSkipped(providers []string, skipped map[string]struct{}) []string {
+	if len(skipped) == 0 {
+		return providers
+	}
+	out := make([]string, 0, len(providers))
+	for _, provider := range providers {
+		key := strings.ToLower(strings.TrimSpace(provider))
+		if key == "" {
+			continue
+		}
+		if _, ok := skipped[key]; ok {
+			continue
+		}
+		out = append(out, provider)
+	}
+	return out
 }
 
 func applyAuthFailureState(auth *Auth, resultErr *Error, retryAfter *time.Duration, now time.Time) {
@@ -2661,6 +2809,11 @@ func applyAuthFailureState(auth *Auth, resultErr *Error, retryAfter *time.Durati
 		if resultErr.Message != "" {
 			auth.StatusMessage = resultErr.Message
 		}
+	}
+	if !disableCooling && isAccountPermanentFailureResultError(resultErr) {
+		auth.StatusMessage = "account_unavailable"
+		auth.NextRetryAfter = now.Add(accountPermanentCooldown)
+		return
 	}
 	statusCode := statusCodeFromResult(resultErr)
 	switch statusCode {

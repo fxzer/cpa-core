@@ -17,16 +17,18 @@ import (
 )
 
 type UsageReporter struct {
-	provider    string
-	model       string
-	alias       string
-	authID      string
-	authIndex   string
-	authType    string
-	apiKey      string
-	source      string
-	requestedAt time.Time
-	once        sync.Once
+	provider      string
+	model         string
+	alias         string
+	authID        string
+	authIndex     string
+	authType      string
+	apiKey        string
+	source        string
+	requestedAt   time.Time
+	once          sync.Once
+	requestBody   string
+	responseBody  string
 }
 
 func NewUsageReporter(ctx context.Context, provider, model string, auth *cliproxyauth.Auth) *UsageReporter {
@@ -49,6 +51,24 @@ func NewUsageReporter(ctx context.Context, provider, model string, auth *cliprox
 		reporter.authIndex = auth.EnsureIndex()
 	}
 	return reporter
+}
+
+func (r *UsageReporter) SetRequestBody(body []byte) {
+	if r == nil {
+		return
+	}
+	if len(body) > 0 {
+		r.requestBody = string(body)
+	}
+}
+
+func (r *UsageReporter) SetResponseBody(body []byte) {
+	if r == nil {
+		return
+	}
+	if len(body) > 0 {
+		r.responseBody = string(body)
+	}
 }
 
 func (r *UsageReporter) Publish(ctx context.Context, detail usage.Detail) {
@@ -150,19 +170,21 @@ func (r *UsageReporter) buildRecordForModel(model string, detail usage.Detail, f
 		return usage.Record{Model: model, Detail: detail, Failed: failed, Fail: fail}
 	}
 	return usage.Record{
-		Provider:    r.provider,
-		Model:       model,
-		Alias:       r.alias,
-		Source:      r.source,
-		APIKey:      r.apiKey,
-		AuthID:      r.authID,
-		AuthIndex:   r.authIndex,
-		AuthType:    r.authType,
-		RequestedAt: r.requestedAt,
-		Latency:     r.latency(),
-		Failed:      failed,
-		Fail:        fail,
-		Detail:      detail,
+		Provider:      r.provider,
+		Model:         model,
+		Alias:         r.alias,
+		Source:        r.source,
+		APIKey:        r.apiKey,
+		AuthID:        r.authID,
+		AuthIndex:     r.authIndex,
+		AuthType:      r.authType,
+		RequestedAt:   r.requestedAt,
+		Latency:       r.latency(),
+		Failed:        failed,
+		Fail:          fail,
+		Detail:        detail,
+		RequestBody:   r.requestBody,
+		ResponseBody:  r.responseBody,
 	}
 }
 

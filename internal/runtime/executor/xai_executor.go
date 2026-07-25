@@ -167,6 +167,8 @@ func (e *XAIExecutor) Execute(ctx context.Context, auth *cliproxyauth.Auth, req 
 			xaiCollectOutputItemDone(eventData, outputItemsByIndex, &outputItemsFallback)
 		case "response.completed":
 			if detail, ok := helps.ParseCodexUsage(eventData); ok {
+				reporter.SetRequestBody(prepared.body)
+				reporter.SetResponseBody(eventData)
 				reporter.Publish(ctx, detail)
 			}
 			completedData := xaiPatchCompletedOutput(eventData, outputItemsByIndex, outputItemsFallback)
@@ -356,6 +358,7 @@ func (e *XAIExecutor) ExecuteStream(ctx context.Context, auth *cliproxyauth.Auth
 					xaiCollectOutputItemDone(eventData, outputItemsByIndex, &outputItemsFallback)
 				case "response.completed":
 					if detail, ok := helps.ParseCodexUsage(eventData); ok {
+						reporter.SetRequestBody(prepared.body)
 						reporter.Publish(ctx, detail)
 					}
 					eventData = xaiPatchCompletedOutput(eventData, outputItemsByIndex, outputItemsFallback)

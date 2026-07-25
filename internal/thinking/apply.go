@@ -295,6 +295,11 @@ func normalizeUserDefinedConfig(config ThinkingConfig, fromFormat, toFormat stri
 	if config.Mode != ModeLevel {
 		return config
 	}
+	// OpenAI-compat 用户自定义模型：把上游普遍不认的 xhigh/max 降到 high。
+	switch toFormat {
+	case "openai", "openai-response", "kimi", "codex":
+		config.Level = ClampOpenAICompatLevel(config.Level)
+	}
 	if toFormat == "claude" {
 		return config
 	}

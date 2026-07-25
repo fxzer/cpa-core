@@ -265,6 +265,8 @@ func (e *CodexExecutor) Execute(ctx context.Context, auth *cliproxyauth.Auth, re
 		}
 
 		if detail, ok := helps.ParseCodexUsage(eventData); ok {
+			reporter.SetRequestBody(body)
+			reporter.SetResponseBody(data)
 			reporter.Publish(ctx, detail)
 		}
 		publishCodexImageToolUsage(ctx, reporter, body, eventData)
@@ -385,6 +387,8 @@ func (e *CodexExecutor) executeCompact(ctx context.Context, auth *cliproxyauth.A
 		return resp, err
 	}
 	helps.AppendAPIResponseChunk(ctx, e.cfg, data)
+	reporter.SetRequestBody(body)
+	reporter.SetResponseBody(data)
 	reporter.Publish(ctx, helps.ParseOpenAIUsage(data))
 	reporter.EnsurePublished(ctx)
 	var param any
@@ -505,6 +509,7 @@ func (e *CodexExecutor) ExecuteStream(ctx context.Context, auth *cliproxyauth.Au
 					collectCodexOutputItemDone(data, outputItemsByIndex, &outputItemsFallback)
 				case "response.completed":
 					if detail, ok := helps.ParseCodexUsage(data); ok {
+						reporter.SetRequestBody(body)
 						reporter.Publish(ctx, detail)
 					}
 					publishCodexImageToolUsage(ctx, reporter, body, data)

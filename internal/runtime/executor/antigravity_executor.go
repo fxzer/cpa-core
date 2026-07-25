@@ -656,6 +656,8 @@ attemptLoop:
 			if useCredits {
 				clearAntigravityCreditsFailureState(auth)
 			}
+			reporter.SetRequestBody(translated)
+			reporter.SetResponseBody(bodyBytes)
 			reporter.Publish(ctx, helps.ParseAntigravityUsage(bodyBytes))
 			var param any
 			converted := sdktranslator.TranslateNonStream(ctx, to, from, req.Model, opts.OriginalRequest, translated, bodyBytes, &param)
@@ -891,6 +893,8 @@ attemptLoop:
 					}
 
 					if detail, ok := helps.ParseAntigravityStreamUsage(payload); ok {
+						reporter.SetRequestBody(translated)
+						reporter.SetResponseBody(line)
 						reporter.Publish(ctx, detail)
 					}
 
@@ -917,6 +921,8 @@ attemptLoop:
 			}
 			resp = cliproxyexecutor.Response{Payload: e.convertStreamToNonStream(buffer.Bytes())}
 
+			reporter.SetRequestBody(translated)
+			reporter.SetResponseBody(resp.Payload)
 			reporter.Publish(ctx, helps.ParseAntigravityUsage(resp.Payload))
 			var param any
 			converted := sdktranslator.TranslateNonStream(ctx, to, from, req.Model, opts.OriginalRequest, translated, resp.Payload, &param)
@@ -1352,6 +1358,7 @@ attemptLoop:
 					}
 
 					if detail, ok := helps.ParseAntigravityStreamUsage(payload); ok {
+						reporter.SetRequestBody(translated)
 						reporter.Publish(ctx, detail)
 					}
 

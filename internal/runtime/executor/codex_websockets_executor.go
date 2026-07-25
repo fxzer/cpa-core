@@ -369,6 +369,8 @@ func (e *CodexWebsocketsExecutor) Execute(ctx context.Context, auth *cliproxyaut
 		eventType := gjson.GetBytes(payload, "type").String()
 		if eventType == "response.completed" {
 			if detail, ok := helps.ParseCodexUsage(payload); ok {
+				reporter.SetRequestBody(body)
+				reporter.SetResponseBody(payload)
 				reporter.Publish(ctx, detail)
 			}
 			var param any
@@ -622,6 +624,7 @@ func (e *CodexWebsocketsExecutor) ExecuteStream(ctx context.Context, auth *clipr
 			eventType := gjson.GetBytes(payload, "type").String()
 			if eventType == "response.completed" || eventType == "response.done" {
 				if detail, ok := helps.ParseCodexUsage(payload); ok {
+					reporter.SetRequestBody(body)
 					reporter.Publish(ctx, detail)
 				}
 			}

@@ -72,13 +72,15 @@ func (p *usageQueuePlugin) HandleUsage(ctx context.Context, record coreusage.Rec
 	fail := resolveFail(ctx, record, failed)
 
 	detail := requestDetail{
-		Timestamp: timestamp,
-		LatencyMs: record.Latency.Milliseconds(),
-		Source:    record.Source,
-		AuthIndex: record.AuthIndex,
-		Tokens:    tokens,
-		Failed:    failed,
-		Fail:      fail,
+		Timestamp:    timestamp,
+		LatencyMs:    record.Latency.Milliseconds(),
+		Source:       record.Source,
+		AuthIndex:    record.AuthIndex,
+		Tokens:       tokens,
+		Failed:       failed,
+		Fail:         fail,
+		RequestBody:  record.RequestBody,
+		ResponseBody: record.ResponseBody,
 	}
 
 	payload, err := json.Marshal(queuedUsageDetail{
@@ -110,13 +112,15 @@ type queuedUsageDetail struct {
 }
 
 type requestDetail struct {
-	Timestamp time.Time  `json:"timestamp"`
-	LatencyMs int64      `json:"latency_ms"`
-	Source    string     `json:"source"`
-	AuthIndex string     `json:"auth_index"`
-	Tokens    tokenStats `json:"tokens"`
-	Failed    bool       `json:"failed"`
-	Fail      failDetail `json:"fail"`
+	Timestamp    time.Time  `json:"timestamp"`
+	LatencyMs    int64      `json:"latency_ms"`
+	Source       string     `json:"source"`
+	AuthIndex    string     `json:"auth_index"`
+	Tokens       tokenStats `json:"tokens"`
+	Failed       bool       `json:"failed"`
+	Fail         failDetail `json:"fail"`
+	RequestBody  string     `json:"request_body,omitempty"`
+	ResponseBody string     `json:"response_body,omitempty"`
 }
 
 type tokenStats struct {

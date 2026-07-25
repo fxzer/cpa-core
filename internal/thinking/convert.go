@@ -107,6 +107,20 @@ func HasLevel(levels []string, target string) bool {
 	return false
 }
 
+// ClampOpenAICompatLevel maps levels that many OpenAI-compatible upstreams
+// reject (xhigh / max) down to high. Common discrete levels pass through unchanged.
+//
+// freemodel / ark / syscxp 等兼容网关通常只接受 low|medium|high；Agent 若发
+// reasoning_effort=xhigh，会导致全池 400。这里在转发前降级，避免工作流中断。
+func ClampOpenAICompatLevel(level ThinkingLevel) ThinkingLevel {
+	switch ThinkingLevel(strings.ToLower(strings.TrimSpace(string(level)))) {
+	case LevelXHigh, LevelMax:
+		return LevelHigh
+	default:
+		return level
+	}
+}
+
 // MapToClaudeEffort maps a generic thinking level string to a Claude adaptive
 // thinking effort value (low/medium/high/max).
 //

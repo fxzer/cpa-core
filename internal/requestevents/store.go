@@ -105,7 +105,9 @@ func (s *Store) init() error {
 			latency_ms integer,
 			failed integer not null default 0,
 			raw_json text,
-			created_at_ms integer not null
+			created_at_ms integer not null,
+			request_body text,
+			response_body text
 		)`,
 		`create index if not exists idx_usage_events_timestamp on usage_events(timestamp_ms)`,
 		`create index if not exists idx_usage_events_request_id on usage_events(request_id)`,
@@ -184,6 +186,10 @@ func (s *Store) ensureUsageEventSnapshotColumns() error {
 		{name: "auth_file_snapshot", definition: "text"},
 		{name: "auth_provider_snapshot", definition: "text"},
 		{name: "auth_snapshot_at_ms", definition: "integer"},
+		{name: "request_body", definition: "text"},
+		{name: "response_body", definition: "text"},
+		{name: "fail_body", definition: "text"},
+		{name: "fail_status_code", definition: "integer"},
 	}
 	for _, column := range columns {
 		if _, ok := existing[column.name]; ok {
@@ -530,8 +536,9 @@ func (s *Store) InsertEvents(ctx context.Context, events []Event) (InsertResult,
 		auth_type, auth_index, source, source_hash, api_key_hash,
 		account_snapshot, auth_label_snapshot, auth_file_snapshot, auth_provider_snapshot, auth_snapshot_at_ms,
 		input_tokens, output_tokens, reasoning_tokens, cached_tokens, cache_tokens, total_tokens,
-		latency_ms, failed, raw_json, created_at_ms
-	) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+		latency_ms, failed, raw_json, created_at_ms, request_body, response_body,
+		fail_body, fail_status_code
+	) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return InsertResult{}, err
 	}
@@ -574,6 +581,10 @@ func (s *Store) InsertEvents(ctx context.Context, events []Event) (InsertResult,
 			failed,
 			nullString(event.RawJSON),
 			event.CreatedAtMS,
+			nullString(event.RequestBody),
+			nullString(event.ResponseBody),
+			nullString(event.FailBody),
+			failStatusValue(event.FailStatusCode),
 		)
 		if err != nil {
 			return InsertResult{}, err
@@ -619,7 +630,8 @@ func (s *Store) ListEvents(ctx context.Context, query ListQuery) ([]Event, error
 		auth_type, auth_index, source, source_hash, api_key_hash,
 		account_snapshot, auth_label_snapshot, auth_file_snapshot, auth_provider_snapshot, auth_snapshot_at_ms,
 		input_tokens, output_tokens, reasoning_tokens, cached_tokens, cache_tokens, total_tokens,
-		latency_ms, failed, raw_json, created_at_ms
+		latency_ms, failed, raw_json, created_at_ms, request_body, response_body,
+		fail_body, fail_status_code
 		from usage_events where 1=1`
 	args := make([]any, 0, 4)
 	if query.StartMS > 0 {
@@ -641,6 +653,30 @@ func (s *Store) ListEvents(ctx context.Context, query ListQuery) ([]Event, error
 	return scanEventRows(rows)
 }
 
+func (s *Store) GetEventByHash(ctx context.Context, hash string) (Event, error) {
+	sqlQuery := `select
+		request_id, event_hash, timestamp_ms, timestamp, provider, model, endpoint, method, path,
+		auth_type, auth_index, source, source_hash, api_key_hash,
+		account_snapshot, auth_label_snapshot, auth_file_snapshot, auth_provider_snapshot, auth_snapshot_at_ms,
+		input_tokens, output_tokens, reasoning_tokens, cached_tokens, cache_tokens, total_tokens,
+		latency_ms, failed, raw_json, created_at_ms, request_body, response_body,
+		fail_body, fail_status_code
+		from usage_events where event_hash = ? limit 1`
+	rows, err := s.db.QueryContext(ctx, sqlQuery, hash)
+	if err != nil {
+		return Event{}, err
+	}
+	defer rows.Close()
+	events, err := scanEventRows(rows)
+	if err != nil {
+		return Event{}, err
+	}
+	if len(events) == 0 {
+		return Event{}, fmt.Errorf("event not found: %s", hash)
+	}
+	return events[0], nil
+}
+
 func (s *Store) RecentEvents(ctx context.Context, limit int) ([]Event, error) {
 	return s.ListEvents(ctx, ListQuery{Limit: limit})
 }
@@ -653,6 +689,8 @@ func scanEventRows(rows *sql.Rows) ([]Event, error) {
 		var authSnapshotAt sql.NullInt64
 		var latency sql.NullInt64
 		var failed int
+		var requestBody, responseBody, failBody sql.NullString
+		var failStatusCode sql.NullInt64
 		if err := rows.Scan(
 			&requestID,
 			&event.EventHash,
@@ -683,6 +721,10 @@ func scanEventRows(rows *sql.Rows) ([]Event, error) {
 			&failed,
 			&rawJSON,
 			&event.CreatedAtMS,
+			&requestBody,
+			&responseBody,
+			&failBody,
+			&failStatusCode,
 		); err != nil {
 			return nil, err
 		}
@@ -704,7 +746,13 @@ func scanEventRows(rows *sql.Rows) ([]Event, error) {
 			event.AuthSnapshotAtMS = authSnapshotAt.Int64
 		}
 		event.RawJSON = rawJSON.String
+		event.RequestBody = requestBody.String
+		event.ResponseBody = responseBody.String
 		event.Failed = failed != 0
+		event.FailBody = failBody.String
+		if failStatusCode.Valid {
+			event.FailStatusCode = int(failStatusCode.Int64)
+		}
 		if event.Alias == "" {
 			event.Alias = AliasFromRawJSON(event.RawJSON)
 		}
@@ -733,6 +781,47 @@ func (s *Store) DeleteEvents(ctx context.Context, ids []string) (int64, error) {
 		return 0, err
 	}
 	return result.RowsAffected()
+}
+
+// MaxBodyStorageBytes is the maximum total size of request_body + response_body
+// columns across all rows. When exceeded, the oldest events are trimmed.
+const MaxBodyStorageBytes = 50 * 1024 * 1024 // 50 MB
+
+func (s *Store) TrimOldEventsByBodySize(ctx context.Context) error {
+	total, err := s.bodyStorageSize(ctx)
+	if err != nil {
+		return err
+	}
+	if total <= MaxBodyStorageBytes {
+		return nil
+	}
+	overflow := total - MaxBodyStorageBytes
+	// Delete oldest events until we've freed at least the overflow + 10% margin
+	target := overflow + MaxBodyStorageBytes/10
+	for {
+		var freed int64
+		err := s.db.QueryRowContext(ctx, `select ifnull(sum(length(coalesce(request_body,'')) + length(coalesce(response_body,''))), 0)
+			from (select request_body, response_body from usage_events order by timestamp_ms asc, id asc limit 50)`).Scan(&freed)
+		if err != nil || freed == 0 {
+			break
+		}
+		_, err = s.db.ExecContext(ctx, `delete from usage_events where rowid in (
+			select rowid from usage_events order by timestamp_ms asc, id asc limit 50)`)
+		if err != nil {
+			return err
+		}
+		target -= freed
+		if target <= 0 {
+			break
+		}
+	}
+	return nil
+}
+
+func (s *Store) bodyStorageSize(ctx context.Context) (int64, error) {
+	var total int64
+	err := s.db.QueryRowContext(ctx, `select ifnull(sum(length(coalesce(request_body,'')) + length(coalesce(response_body,''))), 0) from usage_events`).Scan(&total)
+	return total, err
 }
 
 func (s *Store) Counts(ctx context.Context) (events int64, deadLetters int64, err error) {
@@ -781,4 +870,11 @@ func nullPositiveInt64(value int64) any {
 		return nil
 	}
 	return value
+}
+
+func failStatusValue(code int) any {
+	if code <= 0 {
+		return nil
+	}
+	return code
 }

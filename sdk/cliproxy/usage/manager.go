@@ -11,19 +11,21 @@ import (
 
 // Record contains the usage statistics captured for a single provider request.
 type Record struct {
-	Provider    string
-	Model       string
-	Alias       string
-	APIKey      string
-	AuthID      string
-	AuthIndex   string
-	AuthType    string
-	Source      string
-	RequestedAt time.Time
-	Latency     time.Duration
-	Failed      bool
-	Fail        Failure
-	Detail      Detail
+	Provider      string
+	Model         string
+	Alias         string
+	APIKey        string
+	AuthID        string
+	AuthIndex     string
+	AuthType      string
+	Source        string
+	RequestedAt   time.Time
+	Latency       time.Duration
+	Failed        bool
+	Fail          Failure
+	Detail        Detail
+	RequestBody   string
+	ResponseBody  string
 }
 
 // Failure holds HTTP failure metadata for an upstream request attempt.
