@@ -29,14 +29,15 @@ func (h *Handler) GetRequestEvents(c *gin.Context) {
 	startMS := parseEventTimeQuery(c.Query("start"), c.Query("start_time"))
 	endMS := parseEventTimeQuery(c.Query("end"), c.Query("end_time"))
 
-	// 旧调用方只传 limit（如导出拉全量），此时退回非分页全量行为，保持兼容。
-	if _, hasPaging := c.GetQuery("page"); !hasPaging && c.Query("limit") != "" {
+	// 不传 page 的调用方按非分页全量处理（兼容旧调用方：usage/export 等只传时间范围或 limit）。
+	// page 参数是分页开关，传了 page 才走分页查询。
+	if _, hasPaging := c.GetQuery("page"); !hasPaging {
 		query := requestevents.ListQuery{
 			StartMS: startMS,
 			EndMS:   endMS,
 			Limit:   parsePositiveIntDefault(c.Query("limit"), defaultRequestEventsLimit),
 		}
-		events, err := store.ListEvents(c.Request.Context(), query)
+		events, err := store.ListEventsLight(c.Request.Context(), query)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

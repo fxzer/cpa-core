@@ -729,6 +729,36 @@ func (s *Store) ListEvents(ctx context.Context, query ListQuery) ([]Event, error
 	return scanEventRows(rows)
 }
 
+// ListEventsLight 与 ListEvents 相同，但省略 request_body/response_body/fail_body 三个大字段。
+// 用于不需要 body 的场景（如用量统计页全量拉取），显著减小响应体积。
+// body 详情仍由 GetEventByHash 按需提供。
+func (s *Store) ListEventsLight(ctx context.Context, query ListQuery) ([]Event, error) {
+	limit := query.Limit
+	if limit <= 0 {
+		limit = 50000
+	}
+
+	sqlQuery := `select ` + eventListColumns + ` from usage_events where 1=1`
+	args := make([]any, 0, 4)
+	if query.StartMS > 0 {
+		sqlQuery += ` and timestamp_ms >= ?`
+		args = append(args, query.StartMS)
+	}
+	if query.EndMS > 0 {
+		sqlQuery += ` and timestamp_ms <= ?`
+		args = append(args, query.EndMS)
+	}
+	sqlQuery += ` order by timestamp_ms desc, id desc limit ?`
+	args = append(args, limit)
+
+	rows, err := s.db.QueryContext(ctx, sqlQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanEventRows(rows)
+}
+
 // PagedEvents 是分页查询结果。Total 为满足过滤条件的总行数（与分页参数无关），
 // 用于前端翻页器计算总页数。
 type PagedEvents struct {
