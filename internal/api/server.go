@@ -595,6 +595,8 @@ func (s *Server) registerManagementRoutes() {
 		mgmt.DELETE("/api-keys", s.mgmt.DeleteAPIKeys)
 		mgmt.GET("/api-key-usage", s.mgmt.GetAPIKeyUsage)
 		mgmt.GET("/request-events", s.mgmt.GetRequestEvents)
+		mgmt.GET("/request-events/aggregate", s.mgmt.GetRequestEventsAggregate)
+		mgmt.GET("/request-events/distinct", s.mgmt.GetRequestEventsDistinct)
 		mgmt.GET("/request-events/:id", s.mgmt.GetRequestEvent)
 		mgmt.GET("/request-events/status", s.mgmt.GetRequestEventsStatus)
 		mgmt.GET("/request-events/export", s.mgmt.ExportRequestEvents)

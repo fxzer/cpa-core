@@ -114,6 +114,8 @@ func (s *Store) init() error {
 		`create index if not exists idx_usage_events_model on usage_events(model)`,
 		`create index if not exists idx_usage_events_auth_index on usage_events(auth_index)`,
 		`create index if not exists idx_usage_events_endpoint on usage_events(endpoint)`,
+		// 分页查询按 (timestamp_ms desc, id desc) 排序，复合索引避免额外排序与深翻页时的全表扫描。
+		`create index if not exists idx_usage_events_ts_id on usage_events(timestamp_ms desc, id desc)`,
 		`create table if not exists dead_letter_events (
 			id integer primary key autoincrement,
 			payload text not null,
@@ -614,10 +616,84 @@ func (s *Store) AddDeadLetter(ctx context.Context, payload string, parseErr erro
 }
 
 type ListQuery struct {
-	StartMS int64
-	EndMS   int64
-	Limit   int
+	StartMS    int64
+	EndMS      int64
+	Limit      int
+	Offset     int
+	Model      string
+	Provider   string
+	SourceHash string
+	APIKeyHash string
+	Failed     *bool
+	Search     string
 }
+
+// applyEventFilters 把 ListQuery 里的过滤条件拼到 sqlQuery 上，并追加对应参数。
+// 分页查询、count、聚合查询共用这套 WHERE，保证 total/聚合值与列表切片一致。
+func applyEventFilters(sqlQuery *string, args *[]any, q ListQuery) {
+	if q.StartMS > 0 {
+		*sqlQuery += ` and timestamp_ms >= ?`
+		*args = append(*args, q.StartMS)
+	}
+	if q.EndMS > 0 {
+		*sqlQuery += ` and timestamp_ms <= ?`
+		*args = append(*args, q.EndMS)
+	}
+	if q.Model != "" {
+		*sqlQuery += ` and model = ?`
+		*args = append(*args, q.Model)
+	}
+	if q.Provider != "" {
+		*sqlQuery += ` and provider = ?`
+		*args = append(*args, q.Provider)
+	}
+	if q.SourceHash != "" {
+		*sqlQuery += ` and source_hash = ?`
+		*args = append(*args, q.SourceHash)
+	}
+	if q.APIKeyHash != "" {
+		*sqlQuery += ` and api_key_hash = ?`
+		*args = append(*args, q.APIKeyHash)
+	}
+	if q.Failed != nil {
+		if *q.Failed {
+			*sqlQuery += ` and failed = 1`
+		} else {
+			*sqlQuery += ` and failed = 0`
+		}
+	}
+	if search := strings.TrimSpace(q.Search); search != "" {
+		like := "%" + strings.ToLower(search) + "%"
+		*sqlQuery += ` and (
+			lower(ifnull(request_id,'')) like ? or
+			lower(ifnull(provider,'')) like ? or
+			lower(ifnull(model,'')) like ? or
+			lower(ifnull(endpoint,'')) like ? or
+			lower(ifnull(path,'')) like ? or
+			lower(ifnull(method,'')) like ? or
+			lower(ifnull(source,'')) like ? or
+			lower(ifnull(api_key_hash,'')) like ? or
+			lower(ifnull(account_snapshot,'')) like ? or
+			lower(ifnull(auth_label_snapshot,'')) like ? or
+			lower(ifnull(auth_file_snapshot,'')) like ? or
+			lower(ifnull(auth_index,'')) like ? or
+			lower(ifnull(auth_type,'')) like ?)`
+		for i := 0; i < 13; i++ {
+			*args = append(*args, like)
+		}
+	}
+}
+
+// eventListColumns 是 usage_events 列表查询用到的列。
+// 与全量 ListEvents 相比，这里去掉了 request_body/response_body/fail_body 三个大字段
+// （表格、统计、热力图都不读它们；body 详情由 GetEventByHash 按需取）。
+// 占位的三个空串保持与 scanEventRows 的列顺序一致，scan 函数无需改动。
+const eventListColumns = `request_id, event_hash, timestamp_ms, timestamp, provider, model, endpoint, method, path,
+	auth_type, auth_index, source, source_hash, api_key_hash,
+	account_snapshot, auth_label_snapshot, auth_file_snapshot, auth_provider_snapshot, auth_snapshot_at_ms,
+	input_tokens, output_tokens, reasoning_tokens, cached_tokens, cache_tokens, total_tokens,
+	latency_ms, failed, raw_json, created_at_ms, '' as request_body, '' as response_body, '' as fail_body,
+	fail_status_code`
 
 func (s *Store) ListEvents(ctx context.Context, query ListQuery) ([]Event, error) {
 	limit := query.Limit
@@ -651,6 +727,166 @@ func (s *Store) ListEvents(ctx context.Context, query ListQuery) ([]Event, error
 	}
 	defer rows.Close()
 	return scanEventRows(rows)
+}
+
+// PagedEvents 是分页查询结果。Total 为满足过滤条件的总行数（与分页参数无关），
+// 用于前端翻页器计算总页数。
+type PagedEvents struct {
+	Items []Event
+	Total int64
+}
+
+// ListEventsPaged 按过滤条件分页查询，只取表格/统计需要的列（不含 body 大字段）。
+// 排序固定为 timestamp_ms desc, id desc，与原 ListEvents 一致。
+func (s *Store) ListEventsPaged(ctx context.Context, query ListQuery) (PagedEvents, error) {
+	limit := query.Limit
+	if limit <= 0 {
+		limit = 10
+	}
+	offset := query.Offset
+	if offset < 0 {
+		offset = 0
+	}
+
+	where := ` from usage_events where 1=1`
+	args := make([]any, 0, 8)
+	applyEventFilters(&where, &args, query)
+
+	// count 与列表共用同一套 WHERE，确保 total 反映过滤后的全集。
+	countQuery := `select count(*)` + where
+	var total int64
+	if err := s.db.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
+		return PagedEvents{}, err
+	}
+
+	listQuery := `select ` + eventListColumns + where + ` order by timestamp_ms desc, id desc limit ? offset ?`
+	listArgs := append(args, limit, offset)
+	rows, err := s.db.QueryContext(ctx, listQuery, listArgs...)
+	if err != nil {
+		return PagedEvents{}, err
+	}
+	defer rows.Close()
+	events, err := scanEventRows(rows)
+	if err != nil {
+		return PagedEvents{}, err
+	}
+	return PagedEvents{Items: events, Total: total}, nil
+}
+
+// DistinctValues 返回某列的去重非空值，用于前端过滤下拉选项。
+// 即使当页数据不包含某个 model/provider，下拉里也能选到。
+func (s *Store) DistinctValues(ctx context.Context, column string) ([]string, error) {
+	// 仅允许在固定白名单列上取 distinct，避免 SQL 注入。
+	allowed := map[string]string{
+		"model":        "model",
+		"provider":     "provider",
+		"source_hash":  "source_hash",
+		"api_key_hash": "api_key_hash",
+	}
+	col, ok := allowed[column]
+	if !ok {
+		return nil, fmt.Errorf("unsupported distinct column: %s", column)
+	}
+	rows, err := s.db.QueryContext(ctx,
+		fmt.Sprintf(`select distinct %s from usage_events where %s is not null and %s <> '' order by %s`, col, col, col, col))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	values := make([]string, 0)
+	for rows.Next() {
+		var v string
+		if err := rows.Scan(&v); err != nil {
+			return nil, err
+		}
+		values = append(values, v)
+	}
+	return values, rows.Err()
+}
+
+// TimeBucket 是按天/小时聚合的统计单元，供前端趋势图与热力图使用。
+type TimeBucket struct {
+	BucketMS int64
+	Total    int64
+	Success  int64
+	Failure  int64
+	Tokens   int64
+}
+
+// AggregateResult 是聚合查询结果：全局计数 + 时间维度分布。
+// 仅按时间范围过滤，语义与改造前的全量内存聚合一致（覆盖整个时间窗）。
+type AggregateResult struct {
+	TotalRequests int64
+	SuccessCount  int64
+	FailureCount  int64
+	TotalTokens   int64
+	ByDay         []TimeBucket
+	ByHour        []TimeBucket
+}
+
+// Aggregate 在指定时间窗内做一次聚合查询，避免把全量行拉到内存里统计。
+func (s *Store) Aggregate(ctx context.Context, query ListQuery) (AggregateResult, error) {
+	where := ` from usage_events where 1=1`
+	args := make([]any, 0, 4)
+	// 聚合只认时间范围，忽略其余过滤，统计的是「整个时间窗」而非「当前表格过滤后」。
+	// 这样页头总数与热力图反映的是持久化事件的全局状态。
+	if query.StartMS > 0 {
+		where += ` and timestamp_ms >= ?`
+		args = append(args, query.StartMS)
+	}
+	if query.EndMS > 0 {
+		where += ` and timestamp_ms <= ?`
+		args = append(args, query.EndMS)
+	}
+
+	var result AggregateResult
+	summaryQuery := `select count(*),
+		sum(case when failed = 0 then 1 else 0 end),
+		sum(case when failed = 1 then 1 else 0 end),
+		sum(total_tokens)` + where
+	if err := s.db.QueryRowContext(ctx, summaryQuery, args...).Scan(
+		&result.TotalRequests,
+		&result.SuccessCount,
+		&result.FailureCount,
+		&result.TotalTokens,
+	); err != nil {
+		return AggregateResult{}, err
+	}
+
+	// SQLite 整数除法对 timestamp_ms 取整得到天/小时桶。
+	dayBuckets, err := s.queryTimeBuckets(ctx, where, args, 86_400_000)
+	if err != nil {
+		return AggregateResult{}, err
+	}
+	result.ByDay = dayBuckets
+	hourBuckets, err := s.queryTimeBuckets(ctx, where, args, 3_600_000)
+	if err != nil {
+		return AggregateResult{}, err
+	}
+	result.ByHour = hourBuckets
+	return result, nil
+}
+
+func (s *Store) queryTimeBuckets(ctx context.Context, where string, args []any, spanMs int64) ([]TimeBucket, error) {
+	query := fmt.Sprintf(`select (timestamp_ms / %d) * %d as bucket,
+		count(*),
+		sum(case when failed = 0 then 1 else 0 end),
+		sum(case when failed = 1 then 1 else 0 end),
+		sum(total_tokens)%s group by bucket order by bucket`, spanMs, spanMs, where)
+	rows, err := s.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	buckets := make([]TimeBucket, 0)
+	for rows.Next() {
+		var b TimeBucket
+		if err := rows.Scan(&b.BucketMS, &b.Total, &b.Success, &b.Failure, &b.Tokens); err != nil {
+			return nil, err
+		}
+		buckets = append(buckets, b)
+	}
+	return buckets, rows.Err()
 }
 
 func (s *Store) GetEventByHash(ctx context.Context, hash string) (Event, error) {
